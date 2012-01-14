@@ -44,6 +44,9 @@ $this->lang->load('samba');
 // Form
 ///////////////////////////////////////////////////////////////////////////////
 
+// FIXME: translate
+echo infobox_highlight('Getting Started', 'Before digging into the detailed configuration options, you need to specify core Windows settings along with the password for the winadmin administrator account.  This special winadmin account is used for managing your Windows network.');
+
 echo form_open('samba/status');
 echo form_header(lang('base_initialize'));
 

@@ -46,6 +46,7 @@ $app['core_requires'] = array(
     'app-openldap-directory-core', 
     'samba-client >= 3.6.1',
     'samba-winbind >= 3.6.1',
+    'system-mode-driver',
     'tdb-tools >= 1.2.9'
 );
 
