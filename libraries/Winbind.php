@@ -56,8 +56,15 @@ clearos_load_language('samba');
 //--------
 
 use \clearos\apps\base\Daemon as Daemon;
+use \clearos\apps\base\File as File;
 
 clearos_load_library('base/Daemon');
+clearos_load_library('base/File');
+
+// Exceptions
+//-----------
+
+use \Exception as Exception;
 
 ///////////////////////////////////////////////////////////////////////////////
 // C L A S S
@@ -77,6 +84,12 @@ clearos_load_library('base/Daemon');
 
 class Winbind extends Daemon
 {
+    ///////////////////////////////////////////////////////////////////////////////
+    // C O N S T A N T S
+    ///////////////////////////////////////////////////////////////////////////////
+
+    const FILE_CACHE = '/var/lib/samba/winbindd_cache.tdb';
+
     /**
      * Winbind constructor.
      *
@@ -88,5 +101,34 @@ class Winbind extends Daemon
         clearos_profile(__METHOD__, __LINE__);
 
         parent::__construct('winbind');
+    }
+
+    /**
+     * Resets the cache.
+     *
+     * @return void
+     * @throws Engine_Exception
+     */
+
+    public function reset_cache()
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        if (! $this->get_running_state())
+            return;
+
+        $file = new File(self::FILE_CACHE);
+
+        if ($file->exists()) {
+            $this->set_running_state(FALSE);
+
+            try {
+                $file->delete();
+            } catch (Exception $e) {
+                // Keep going
+            }
+
+            $this->set_running_state(TRUE);
+        }
     }
 }
