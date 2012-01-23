@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Samba global settings controller.
+ * Samba administrator controller.
  *
  * @category   Apps
  * @package    Samba
@@ -34,7 +34,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * Samba global settings controller.
+ * Samba administrator controller.
  *
  * @category   Apps
  * @package    Samba
@@ -45,76 +45,84 @@
  * @link       http://www.clearfoundation.com/docs/developer/apps/samba/
  */
 
-class Settings extends ClearOS_Controller
+class Administrator extends ClearOS_Controller
 {
     /**
-     * Samba global settings controller.
+     * Samba administrator view.
      *
      * @return view
      */
 
     function index()
     {
-        $this->_common('view');
+        $this->view();
     }
 
     /**
-     * Edit view.
+     * Initialization view.
      *
      * @return view
      */
 
     function edit()
     {
-        $this->_common('edit');
+        $this->_form('edit');
     }
-
+     
     /**
-     * View view.
+     * Initialization view.
      *
      * @return view
      */
 
     function view()
     {
-        $this->_common('view');
+        $this->_form('view');
     }
 
     /**
-     * Common settings handler.
+     * Common form view.
      *
      * @param string $form_type form type
      *
      * @return view
      */
 
-    function _common($form_type)
+    function _form($form_type)
     {
-        // Load dependencies
-        //------------------
+        // Load libraries
+        //---------------
 
-        $this->lang->load('base');
         $this->lang->load('samba');
         $this->load->library('samba/Samba');
 
         // Set validation rules
         //---------------------
-         
-        $this->form_validation->set_policy('netbios', 'samba/Samba', 'validate_netbios_name', TRUE);
-        $this->form_validation->set_policy('comment', 'samba/Samba', 'validate_server_string', TRUE);
-        //$this->form_validation->set_policy('printing', 'samba/Samba', 'validate_server_string', TRUE);
+
+        $this->form_validation->set_policy('password', 'samba/Samba', 'validate_password', TRUE);
+        $this->form_validation->set_policy('verify', 'samba/Samba', 'validate_password', TRUE);
+
         $form_ok = $this->form_validation->run();
+
+        // Extra validation
+        //-----------------
+
+        if ($form_ok) {
+            if ($this->input->post('password') != $this->input->post('verify')) {
+                $this->form_validation->set_error('verify', lang('base_password_and_verify_do_not_match'));
+                $form_ok = FALSE;
+            }
+        }
 
         // Handle form submit
         //-------------------
 
         if (($this->input->post('submit') && $form_ok)) {
             try {
-                $this->samba->set_netbios_name($this->input->post('netbios'));
-                $this->samba->set_server_string($this->input->post('comment'));
+                $this->samba->set_administrator_password($this->input->post('password'));
 
                 $this->page->set_status_updated();
-                redirect('/samba/settings');
+                redirect('/samba/administrator');
             } catch (Exception $e) {
                 $this->page->view_exception($e);
                 return;
@@ -126,15 +134,7 @@ class Settings extends ClearOS_Controller
 
         try {
             $data['form_type'] = $form_type;
-            $data['netbios'] = $this->samba->get_netbios_name();
-            $data['comment'] = $this->samba->get_server_string();
-            $data['homes'] = $this->samba->get_homes_state();
-            $data['wins_support'] = $this->samba->get_wins_support();
-            $data['wins_server'] = $this->samba->get_wins_server();
-
-            $data['show_printing'] = clearos_app_installed('print_server') ? TRUE : FALSE;
-            $data['printing'] = $this->samba->get_printing_mode();
-            $data['printing_options'] = $this->samba->get_printing_modes();
+            $data['administrator'] = $this->samba->get_administrator_account();
         } catch (Exception $e) {
             $this->page->view_exception($e);
             return;
@@ -143,6 +143,6 @@ class Settings extends ClearOS_Controller
         // Load views
         //-----------
 
-        $this->page->view_form('samba/settings', $data, lang('base_settings'));
+        $this->page->view_form('samba/administrator', $data, lang('samba_app_name'));
     }
 }

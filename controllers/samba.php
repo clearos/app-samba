@@ -59,12 +59,27 @@ class Samba extends ClearOS_Controller
         //---------------
 
         $this->lang->load('samba');
+        $this->load->library('samba/Samba');
+
+        // Load view data
+        //---------------
+
+        try {
+            $is_initialized = $this->samba->is_local_system_initialized();
+        } catch (Exception $e) {
+            $this->page->view_exception($e);
+            return;
+        }
 
         // Load views
         //-----------
 
-        $views = array('samba/settings', 'samba/mode');
+        if ($is_initialized) {
+            $views = array('samba/settings', 'samba/mode', 'samba/administrator', 'samba/computers');
 
-        $this->page->view_forms($views, lang('samba_app_name'));
+            $this->page->view_forms($views, lang('samba_app_name'));
+        } else {
+            redirect('/samba/initialize');
+        }
     }
 }

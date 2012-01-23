@@ -27,7 +27,9 @@ $app['subcategory'] = lang('base_subcategory_file');
 
 $app['controllers']['samba']['title'] = $app['name'];
 $app['controllers']['mode']['title'] = lang('samba_mode');
-// $app['controllers']['settings']['title'] = lang('base_settings');
+$app['controllers']['settings']['title'] = lang('base_settings');
+$app['controllers']['computers']['title'] = lang('samba_computers');
+$app['controllers']['administrator']['title'] = lang('samba_administrator_account');
 
 /////////////////////////////////////////////////////////////////////////////
 // Packaging
@@ -44,6 +46,7 @@ $app['requires'] = array(
 $app['core_requires'] = array(
     'app-network-core', 
     'app-openldap-directory-core', 
+    'csplugin-filewatch',
     'samba-client >= 3.6.1',
     'samba-winbind >= 3.6.1',
     'system-mode-driver',
@@ -51,6 +54,8 @@ $app['core_requires'] = array(
 );
 
 $app['core_file_manifest'] = array( 
+    'filewatch-samba-accounts.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-accounts.conf'),
+    'filewatch-samba-configuration.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-configuration.conf'),
     'smb.ldap.conf' => array( 'target' => '/var/clearos/ldap/synchronize/smb.ldap.conf' ),
     'smb.winbind.conf' => array( 'target' => '/var/clearos/ldap/synchronize/smb.winbind.conf' ),
     'add-samba-directories' => array(

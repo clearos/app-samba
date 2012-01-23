@@ -53,20 +53,14 @@ clearos_load_language('samba');
 // D E P E N D E N C I E S
 ///////////////////////////////////////////////////////////////////////////////
 
-// Factories
-//----------
-
-use \clearos\apps\users\User_Factory as User;
-
-clearos_load_library('users/User_Factory');
-
 // Classes
 //--------
 
 use \clearos\apps\base\File as File;
-use \clearos\apps\base\File_No_Match_Exception as File_No_Match_Exception;
 use \clearos\apps\base\Shell as Shell;
 use \clearos\apps\base\Software as Software;
+use \clearos\apps\mode\Mode_Engine as Mode_Engine;
+use \clearos\apps\mode\Mode_Factory as Mode_Factory;
 use \clearos\apps\network\Hostname as Hostname;
 use \clearos\apps\network\Network_Utils as Network_Utils;
 use \clearos\apps\samba\Nmbd as Nmbd;
@@ -74,11 +68,13 @@ use \clearos\apps\samba\OpenLDAP_Driver as OpenLDAP_Driver;
 use \clearos\apps\samba\Samba as Samba;
 use \clearos\apps\samba\Smbd as Smbd;
 use \clearos\apps\samba\Winbind as Winbind;
+use \clearos\apps\users\User_Factory as User_Factory;
 
 clearos_load_library('base/File');
-clearos_load_library('base/File_No_Match_Exception');
 clearos_load_library('base/Shell');
 clearos_load_library('base/Software');
+clearos_load_library('mode/Mode_Engine');
+clearos_load_library('mode/Mode_Factory');
 clearos_load_library('network/Hostname');
 clearos_load_library('network/Network_Utils');
 clearos_load_library('samba/Nmbd');
@@ -86,17 +82,21 @@ clearos_load_library('samba/OpenLDAP_Driver');
 clearos_load_library('samba/Samba');
 clearos_load_library('samba/Smbd');
 clearos_load_library('samba/Winbind');
+clearos_load_library('users/User_Factory');
 
 // Exceptions
 //-----------
 
+use \Exception as Exception;
 use \clearos\apps\base\Engine_Exception as Engine_Exception;
+use \clearos\apps\base\File_No_Match_Exception as File_No_Match_Exception;
 use \clearos\apps\base\Validation_Exception as Validation_Exception;
 use \clearos\apps\samba\Samba_Connection_Exception as Samba_Connection_Exception;
 use \clearos\apps\samba\Samba_Not_Initialized_Exception as Samba_Not_Initialized_Exception;
 use \clearos\apps\samba\Samba_Share_Not_Found_Exception as Samba_Share_Not_Found_Exception;
 
 clearos_load_library('base/Engine_Exception');
+clearos_load_library('base/File_No_Match_Exception');
 clearos_load_library('base/Validation_Exception');
 clearos_load_library('samba/Samba_Connection_Exception');
 clearos_load_library('samba/Samba_Not_Initialized_Exception');
@@ -128,7 +128,7 @@ class Samba extends Software
     const FILE_CONFIG = '/etc/samba/smb.conf';
     const FILE_DOMAIN_SID = '/etc/samba/domainsid';
     const FILE_LOCAL_SID = '/etc/samba/localsid';
-    const FILE_LOCAL_SYSTEM_INITIALIZED = '/var/clearos/samba/local_initialized';
+    const FILE_LOCAL_SYSTEM_INITIALIZED = '/var/clearos/samba/initialized_local';
     const FILE_DOMAIN_SID_CACHE = '/var/clearos/samba/domain_sid_cache';
     const PATH_STATE = '/var/lib/samba';
     const PATH_STATE_BACKUP = '/var/clearos/samba/backup';
@@ -227,6 +227,20 @@ class Samba extends Software
             'available',
             'special'
         );
+    }
+
+    /**
+     * Returns administrator account.
+     *
+     * @return string administrator account
+     * @throws Engine_Exception
+     */
+
+    public function get_administrator_account()
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        return self::CONSTANT_WINADMIN_USERNAME;
     }
 
     /**
@@ -335,7 +349,7 @@ class Samba extends Software
         if ($file->exists())
             $file->delete();
 
-        $file->create('root', 'webconfig', '0644');  // FIXME: change to 640 post-testing
+        $file->create('root', 'webconfig', '0640');
         $file->add_lines("$sid\n");
 
         return $sid;
@@ -523,15 +537,12 @@ class Samba extends Software
     }
 
     /**
-     * Gets available default modes.
-     *
-     * The default modes are described as follows.
+     * Returns mode.
      *
      *                  +  PDC  +  BDC  +  Simple
-     * Preferred Master |   y   | auto  |    y
      *    Domain Master |   y   |   n   |    y
-     *    Domain Logons |   y   |   y   |    n
-     *       [netlogon] |   y   |   n   |    n
+     *    Domain Logons |   y   |   y   |    y
+     *       [netlogon] |   y   |   -   |    n
      *
      * @return string mode
      * @throws Engine_Exception
@@ -542,8 +553,8 @@ class Samba extends Software
         clearos_profile(__METHOD__, __LINE__);
 
         try {
+            $domain_master = $this->get_domain_master();
             $domain_logons = $this->get_domain_logons();
-            $preferred_master = $this->get_preferred_master();
             $netlogon_info = $this->get_share_info('netlogon');
         } catch (Samba_Share_Not_Found_Exception $e) {
             // Not fatal
@@ -551,11 +562,11 @@ class Samba extends Software
 
         $netlogon = (isset($netlogon_info)) ? $netlogon_info['available'] : FALSE;
 
-        if ($preferred_master && $domain_logons && $netlogon)
+        if ($domain_master && $domain_logons && $netlogon)
             return self::MODE_PDC;
-        else if (!$preferred_master && !$domain_logons && !$netlogon)
+        else if (!$domain_master && $domain_logons)
             return self::MODE_BDC;
-        else if ($preferred_master && $domain_logons && !$netlogon)
+        else if ($domain_master && $domain_logons && !$netlogon)
             return self::MODE_SIMPLE_SERVER;
         else
             return self::MODE_CUSTOM;
@@ -1043,14 +1054,15 @@ class Samba extends Software
     /**
      * Initializes the local Samba system environment.
      *
-     * @param string $netbios_name netbios_name
-     * @param string $password password for winadmin
+     * @param string $netbios_  name netbios_name
+     * @param string $workgroup workgroup/Windows domain
+     * @param string $password  password for winadmin
      *
      * @return void
      * @throws Engine_Exception, Samba_Not_Initialized_Exception
      */
 
-    public function initialize_local_system($netbios_name, $password)
+    public function initialize_local_master_or_standalone($netbios, $workgroup, $password)
     {
         clearos_profile(__METHOD__, __LINE__);
 
@@ -1058,28 +1070,37 @@ class Samba extends Software
         //----------------------------------
 
         $ldap = new OpenLDAP_Driver();
+
         if (! $ldap->is_directory_initialized())
             throw new Samba_Not_Initialized_Exception();
 
-        // Set the netbios name
-        //---------------------
+        // Set the winadmin password
+        //--------------------------
 
-        $this->set_netbios_name($netbios_name);
+        $this->set_administrator_password($password);
 
-        // TODO: assuming PDC mode for now
-        //------------------------------
+        // Set the netbios name and workgroup
+        //-----------------------------------
 
-        $this->set_mode(Samba::MODE_PDC);
+        $this->set_netbios_name($netbios);
+        $this->set_workgroup($workgroup);
+
+        // Set default mode
+        //-----------------
+
+        $sysmode = Mode_Factory::create();
+        $mode = $sysmode->get_mode();
+
+        if (($mode === Mode_Engine::MODE_MASTER) || ($mode === Mode_Engine::MODE_STANDALONE))
+            $this->set_mode(Samba::MODE_PDC);
+        else if ($mode === Mode_Engine::MODE_SLAVE)
+            $this->set_mode(Samba::MODE_BDC);
 
         // Save the LDAP an Idmap passwords
         //---------------------------------
 
         $this->_save_bind_password();
         $this->_save_idmap_password();
-
-        // Set the domain SID
-        // FIXME: investigate in BDC mode
-        // $this->set_domain_sid();
 
         // Net calls for privs an joining system to domain
         // Note: Samba needs to be running for the next steps
@@ -1099,7 +1120,7 @@ class Samba extends Software
         $net_error = ''; 
         
         for ($i = 0; $i < 5; $i++) { 
-            sleep(3); // wait or daemons to start, not atomic
+            sleep(2); // wait or daemons to start, not atomic
 
             try {
                 // Grant default privileges to winadmin et al
@@ -1140,6 +1161,58 @@ class Samba extends Software
     }
 
     /**
+     * Initializes the local Samba system environment on a slave.
+     *
+     * @param string $netbios_  name netbios_name
+     * @param string $password  password for winadmin
+     *
+     * @return void
+     * @throws Engine_Exception, Samba_Not_Initialized_Exception
+     */
+
+    public function initialize_local_slave($netbios, $password)
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        // Run initialization again, but with Netbios name and password to join domain
+        //----------------------------------------------------------------------------
+
+        $this->initialize_slave_system($netbios, $password);
+
+        // Update local file permissions
+        //------------------------------
+
+        $this->update_local_file_permissions();
+
+        // Set the local system initialized flag
+        $this->set_local_system_initialized(TRUE);
+
+    }
+
+    /**
+     * Initializes system using sane defaults.
+     *
+     * @param boolean $force    force initialization
+     *
+     * @return void
+     * @throws Engine_Exception
+     */
+
+    public function initialize($force)
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        $sysmode = Mode_Factory::create();
+        $mode = $sysmode->get_mode();
+
+        if (($mode === Mode_Engine::MODE_MASTER) || ($mode === Mode_Engine::MODE_STANDALONE)) {
+            $this->initialize_master_system('CLEARSYSTEM', NULL, $force);
+        } else if ($mode === Mode_Engine::MODE_SLAVE) {
+            $this->initialize_slave_system();
+        }
+    }
+
+    /**
      * Initializes master node with the necessary Samba elements.
      *
      * You do not need to have the server components of Samba installed
@@ -1158,9 +1231,101 @@ class Samba extends Software
     {
         clearos_profile(__METHOD__, __LINE__);
 
+        // Bail if we are not a master/standalone system
+        //----------------------------------------------
+
+        $sysmode = Mode_Factory::create();
+        $mode = $sysmode->get_mode();
+
+        if (($mode !== Mode_Engine::MODE_MASTER) && ($mode !== Mode_Engine::MODE_STANDALONE))
+            throw new Engine_Exception('samba_system_not_in_master_mode');
+
+        // Initialize the LDAP components
+        //-------------------------------
+
+        $ldap = new OpenLDAP_Driver();
+        $ldap->initialize_master_system($domain, $password, $force);
+
+        // Handle Samba configuration and post cleanup
+        //--------------------------------------------
+
+        $this->set_mode(Samba::MODE_PDC);
+        $this->_clean_secrets_file($password);
+    }
+
+    /**
+     * Initializes slave node with the necessary Samba elements.
+     *
+     * @param string $netbios  NetBIOS name
+     * @param string $password password for winadmin
+     *
+     * @return void
+     * @throws Engine_Exception
+     */
+
+    public function initialize_slave_system($netbios = NULL, $password = NULL)
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        // Directory needs to be initialized
+        //----------------------------------
+
         $ldap = new OpenLDAP_Driver();
 
-        return $ldap->initialize_master_system($domain, $password, $force);
+        if (! $ldap->is_directory_initialized())
+            throw new Samba_Not_Initialized_Exception();
+
+        // Bail if we are not a slave system
+        //----------------------------------
+
+        $sysmode = Mode_Factory::create();
+        $mode = $sysmode->get_mode();
+
+        if ($mode !== Mode_Engine::MODE_SLAVE)
+            throw new Engine_Exception('samba_system_not_in_slave_mode');
+
+        // Set BDC defaults
+        //-----------------
+
+        $ldap = new OpenLDAP_Driver();
+        $workgroup = $ldap->get_domain();
+
+        $wins = $sysmode->get_master_hostname();
+
+        // TODO: hook to SDN to get device name
+        if (empty($netbios)) {
+            $hostnameobj = new Hostname();
+            $netbios = strtoupper($hostnameobj->get()) . 'BDC';
+        }
+
+        $this->set_mode(Samba::MODE_BDC);
+        $this->set_netbios_name($netbios);
+        $this->set_workgroup($workgroup);
+        $this->set_wins_server_and_support($wins, FALSE);
+        $this->_clean_secrets_file($password);
+
+        // Join system to domain
+        //----------------------
+// FIXME: net rpc join over Internet?
+
+/*
+        if (! is_null($password)) {
+            $net_error = ''; 
+            
+            for ($i = 0; $i < 5; $i++) { 
+                sleep(2); // wait or daemons to start, not atomic
+
+                try {
+                    $this->_net_rpc_join($password);
+
+                    $net_error = '';
+                    continue;
+                } catch (Engine_Exception $e) {
+                    $net_error = clearos_exception_message($e);
+                }
+            }
+        }
+*/
     }
 
     /**
@@ -1240,7 +1405,6 @@ class Samba extends Software
     {
         clearos_profile(__METHOD__, __LINE__);
 
-        // FIXME: password handling via Shell
         $options['env'] = 'LANG=en_US';
         $options['validate_exit_code'] = FALSE;
 
@@ -1289,6 +1453,26 @@ class Samba extends Software
         clearos_profile(__METHOD__, __LINE__);
 
         $this->_set_share_info('global', 'add machine script', $script);
+    }
+
+    /**
+     * Sets administrator passord.
+     *
+     * @param string $password
+     *
+     * @return void
+     * @throws Validation_Exception, Engine_Exception
+     */
+
+    public function set_administrator_password($password)
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        $user = User_Factory::create(self::CONSTANT_WINADMIN_USERNAME);
+        $user->reset_password($password, $password, self::CONSTANT_WINADMIN_USERNAME);
+
+        // TODO: not sure why we do this
+        $this->_clean_secrets_file($password);
     }
 
     /**
@@ -1535,14 +1719,14 @@ class Samba extends Software
             $this->set_default_idmap_backend('ldap');
             $this->_set_ldap_includes(TRUE);
         } else if ($mode == self::MODE_BDC) {
-            $this->set_domain_logons(FALSE);
+            $this->set_domain_logons(TRUE);
             $this->set_domain_master(FALSE);
-            $this->set_preferred_master(FALSE);
+            $this->set_preferred_master(TRUE);
             $this->set_share_availability('netlogon', FALSE);
             $this->set_share_availability('profiles', FALSE);
             $this->set_roaming_profiles_state(FALSE);
             $this->set_unix_password_sync_state(FALSE);
-            $this->set_security(Samba::SECURITY_DOMAIN);
+            $this->set_security(Samba::SECURITY_USER);
             $this->set_default_idmap_backend('ldap');
             $this->_set_ldap_includes(TRUE);
         } else if ($mode == self::MODE_SIMPLE_SERVER) {
@@ -1557,7 +1741,6 @@ class Samba extends Software
             $this->set_default_idmap_backend('ldap');
             $this->_set_ldap_includes(TRUE);
         } else if ($mode == self::MODE_MEMBER) {
-            // FIXME: David review
             $this->set_domain_logons(FALSE);
             $this->set_domain_master(FALSE);
             $this->set_preferred_master(FALSE);
@@ -1591,13 +1774,6 @@ class Samba extends Software
 
         if ($netbios_name == $old_name)
             return;
-
-        // Add/delete computer
-        // FIXME: verify in slave mode / referral
-        // FIXME: use net rpc join, instead
-        $ldap = new OpenLDAP_Driver();
-        $ldap->delete_computer($old_name . '$');
-        $ldap->add_computer($netbios_name . '$');
 
         // Change smb.conf
         $this->_set_share_info('global', 'netbios name', $netbios_name);
@@ -1922,8 +2098,14 @@ class Samba extends Software
         // Change smb.conf
         $this->_set_share_info('global', 'workgroup', $workgroup);
 
-        $ldap = new OpenLDAP_Driver();
-        $ldap->set_workgroup($workgroup);
+        // LDAP changes on master
+        $sysmode = Mode_Factory::create();
+        $mode = $sysmode->get_mode();
+
+        if (($mode === Mode_Engine::MODE_MASTER) || ($mode === Mode_Engine::MODE_STANDALONE)) {
+            $ldap = new OpenLDAP_Driver();
+            $ldap->set_workgroup($workgroup);
+        }
 
         // Clean up secrets file
         $this->_clean_secrets_file();
@@ -2100,6 +2282,19 @@ class Samba extends Software
 
         if ($workgroup === $netbios_name)
             return lang('samba_server_name_conflicts_with_windows_domain');
+    }
+
+    /**
+     * Validation routine for password.
+     *
+     * @param string $password password
+     *
+     * @return string error message if password is invalid
+     */
+
+    public function validate_password($password)
+    {
+        clearos_profile(__METHOD__, __LINE__);
     }
 
     /**
@@ -2434,7 +2629,7 @@ class Samba extends Software
      * @throws Engine_Exception
      */
 
-    public function _net_grant_default_privileges($password)
+    protected function _net_grant_default_privileges($password)
     {
         clearos_profile(__METHOD__, __LINE__);
 
@@ -2482,19 +2677,14 @@ class Samba extends Software
      * @throws Engine_Exception
      */
 
-    public function _clean_secrets_file($winpassword = NULL)
+    protected function _clean_secrets_file($winpassword = NULL)
     {
         clearos_profile(__METHOD__, __LINE__);
 
-
         $ldap = new OpenLDAP_Driver();
+
         if (! $ldap->is_directory_initialized())
             return;
-/*
-// FIXME
-        if (!$this->is_local_system_initialized())
-            return;
-*/
 
         $nmbd = new Nmbd();
         $smbd = new Smbd();

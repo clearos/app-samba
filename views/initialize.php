@@ -40,29 +40,61 @@ $this->lang->load('samba');
 // Form handler
 ///////////////////////////////////////////////////////////////////////////////
 
+if ($mode === 'slave') {
+    $help = lang('samba_initialize_slave_help');
+    $title = lang('samba_initialize_bdc');
+    $button_text = lang('samba_join_domain');
+    $domain_read_only = TRUE;
+} else {
+    $help = lang('samba_initialize_master_help');
+    $title = lang('base_initialize');
+    $button_text = lang('base_initialize');
+    $domain_read_only = FALSE;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Status boxes
+///////////////////////////////////////////////////////////////////////////////
+
+echo infobox_highlight(lang('base_getting_started'), $help);
+
+echo "<div id='initialization' style='display:none;'>";
+
+echo infobox_highlight(
+    lang('base_status'),
+    "<div id='initialization_result'></div>"
+);
+
+echo "</div>";
+
 ///////////////////////////////////////////////////////////////////////////////
 // Form
 ///////////////////////////////////////////////////////////////////////////////
 
-// FIXME: translate
-echo infobox_highlight('Getting Started', 'Before digging into the detailed configuration options, you need to specify core Windows settings along with the password for the winadmin administrator account.  This special winadmin account is used for managing your Windows network.');
+echo "<div id='configuration' style='display:none;'>";
+echo "<form><input type='hidden' id='init_validated' value='$validated'></form>";
 
-echo form_open('samba/status');
-echo form_header(lang('base_initialize'));
+echo form_open('samba/initialize/edit');
+echo form_header($title);
 
 echo fieldset_header(lang('samba_windows_network'));
 echo field_input('netbios', $netbios, lang('samba_server_name'));
-echo field_input('domain', $domain, lang('samba_windows_domain'));
+echo field_input('domain', $domain, lang('samba_windows_domain'), $domain_read_only);
 echo fieldset_footer();
 
-echo fieldset_header(lang('samba_set_administrator_password') . ' - winadmin');
+echo fieldset_header(lang('samba_administrator_password'));
+echo field_input('administrator', $administrator, lang('samba_account_username'), TRUE);
 echo field_password('password', '', lang('base_password'));
-echo field_password('verify', '', lang('base_verify'));
+if ($mode !== 'slave')
+    echo field_password('verify', '', lang('base_verify'));
 echo fieldset_footer();
 
 echo field_button_set(
-    array(form_submit_custom('submit', lang('base_initialize')))
+    array(form_submit_custom('submit', $button_text))
 );
 
 echo form_footer();
 echo form_close();
+
+echo "</div>";

@@ -134,6 +134,10 @@ class Computer extends Engine
     {
         clearos_profile(__METHOD__, __LINE__);
 
+        // Append dollar sign
+        if (!preg_match('/\$$/', $name))
+            $name = $name . '$';
+
         Validation_Exception::is_valid($this->validate_computer($name));
 
         $ldap = new OpenLDAP_Driver();

@@ -27,6 +27,7 @@ License: LGPLv3
 Requires: app-base-core
 Requires: app-network-core
 Requires: app-openldap-directory-core
+Requires: csplugin-filewatch
 Requires: samba-client >= 3.6.1
 Requires: samba-winbind >= 3.6.1
 Requires: system-mode-driver
@@ -49,6 +50,8 @@ install -d -m 0755 %{buildroot}/var/clearos/samba
 install -d -m 0755 %{buildroot}/var/clearos/samba/backup
 install -D -m 0755 packaging/add-samba-directories %{buildroot}/usr/sbin/add-samba-directories
 install -D -m 0755 packaging/add-windows-group-info %{buildroot}/usr/sbin/add-windows-group-info
+install -D -m 0644 packaging/filewatch-samba-accounts.conf %{buildroot}/etc/clearsync.d/filewatch-samba-accounts.conf
+install -D -m 0644 packaging/filewatch-samba-configuration.conf %{buildroot}/etc/clearsync.d/filewatch-samba-configuration.conf
 install -D -m 0644 packaging/nmb.php %{buildroot}/var/clearos/base/daemon/nmb.php
 install -D -m 0755 packaging/samba-add-machine %{buildroot}/usr/sbin/samba-add-machine
 install -D -m 0755 packaging/samba-init %{buildroot}/usr/sbin/samba-init
@@ -102,6 +105,8 @@ exit 0
 /usr/clearos/apps/samba/libraries
 /usr/sbin/add-samba-directories
 /usr/sbin/add-windows-group-info
+/etc/clearsync.d/filewatch-samba-accounts.conf
+/etc/clearsync.d/filewatch-samba-configuration.conf
 /var/clearos/base/daemon/nmb.php
 /usr/sbin/samba-add-machine
 /usr/sbin/samba-init

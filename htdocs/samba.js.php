@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Samba controller.
+ * Samba javascript helper.
  *
  * @category   Apps
  * @package    Samba
@@ -29,10 +29,37 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////
+// B O O T S T R A P
+///////////////////////////////////////////////////////////////////////////////
+
+$bootstrap = getenv('CLEAROS_BOOTSTRAP') ? getenv('CLEAROS_BOOTSTRAP') : '/usr/clearos/framework/shared';
+require_once $bootstrap . '/bootstrap.php';
+
+///////////////////////////////////////////////////////////////////////////////
+// T R A N S L A T I O N S
+///////////////////////////////////////////////////////////////////////////////
+
+clearos_load_language('base');
+clearos_load_language('central_management');
+
+///////////////////////////////////////////////////////////////////////////////
+// J A V A S C R I P T
+///////////////////////////////////////////////////////////////////////////////
+
 header('Content-Type:application/x-javascript');
 ?>
 
 $(document).ready(function() {
+
+    // Translations
+    //-------------
+
+    lang_initializing = '<?php echo lang("base_initializing..."); ?>';
+
+    // Mode field handling
+    //--------------------
+
     $('#profiles_field').hide();
     $('#logon_drive_field').hide();
     $('#logon_script_field').hide();
@@ -42,6 +69,40 @@ $(document).ready(function() {
     $('#mode').change(function() {
         changeMode();
     });
+
+    // Initialization
+    //---------------
+
+    if ($("#init_validated").val() == 1) {
+        $("#initialization_result").html('<div class="theme-loading-normal">' + lang_initializing + '</div>');
+
+        $("#configuration").hide();
+        $("#initialization").show();
+
+        $.ajax({
+            type: 'POST',
+            dataType: 'json',
+            data:
+                'ci_csrf_token=' + $.cookie('ci_csrf_token') +
+                '&netbios=' + $("#netbios").val() +
+                '&domain=' + $("#domain").val() +
+                '&password=' + $("#password").val()
+            ,
+            url: '/app/samba/initialize/run',
+            success: function(payload) {
+                if (payload.code == 0) {
+                    window.location.href = '/app/samba';
+                } else {
+                    $("#initialization_result").html(payload.error_message);
+                    $("#configuration").show();
+                }
+            },
+            error: function() {
+            }
+        });
+    } else {
+        $("#configuration").show();
+    }
 });
 
 function changeMode() {

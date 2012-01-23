@@ -308,10 +308,45 @@ class OpenLDAP_Driver extends Engine
             $attributes = $this->ldaph->get_attributes($entry);
             $sid = $attributes['sambaSID'][0];
         } else {
-            throw new Engine_Exception(LOCALE_LANG_ERRMSG_SYNTAX_ERROR . " - sambaDomainName", COMMON_ERROR);
+            throw new Engine_Exception(lang('samba_domain_name_missing_in_ldap'));
         }
 
         return $sid;
+    }
+
+    /**
+     * Returns domain.
+     *
+     * @return string domain
+     * @throws Engine_Exception, Samba_Not_Initialized_Exception
+     */
+
+    public function get_domain()
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        if ($this->ldaph === NULL)
+            $this->_get_ldap_handle();
+
+        if (! $this->is_directory_initialized())
+            throw new Samba_Not_Initialized_Exception();
+
+        $result = $this->ldaph->search(
+            "(objectclass=sambaDomain)",
+            OpenLDAP::get_base_dn(),
+            array("sambaDomainName", "sambaSID")
+        );
+
+        $entry = $this->ldaph->get_first_entry($result);
+
+        if ($entry) {
+            $attributes = $this->ldaph->get_attributes($entry);
+            $domain = $attributes['sambaDomainName'][0];
+        } else {
+            throw new Engine_Exception(lang('samba_domain_name_missing_in_ldap'));
+        }
+
+        return $domain;
     }
 
     /**

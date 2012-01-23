@@ -1,12 +1,11 @@
-#!/usr/clearos/sandbox/usr/bin/php
 <?php
 
 /**
- * ClearOS Samba initializtion.
+ * Samba initialize view.
  *
- * @category   Apps
- * @package    Accounts
- * @subpackage Scripts
+ * @category   ClearOS
+ * @package    Samba
+ * @subpackage Views
  * @author     ClearFoundation <developer@clearfoundation.com>
  * @copyright  2011 ClearFoundation
  * @license    http://www.gnu.org/copyleft/gpl.html GNU General Public License version 3 or later
@@ -26,61 +25,47 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-//
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.  
+//  
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
-// B O O T S T R A P
+// Load dependencies
 ///////////////////////////////////////////////////////////////////////////////
 
-$bootstrap = getenv('CLEAROS_BOOTSTRAP') ? getenv('CLEAROS_BOOTSTRAP') : '/usr/clearos/framework/shared';
-require_once $bootstrap . '/bootstrap.php';
+$this->lang->load('base');
+$this->lang->load('samba');
 
 ///////////////////////////////////////////////////////////////////////////////
-// D E P E N D E N C I E S
+// Form handler
 ///////////////////////////////////////////////////////////////////////////////
 
-// Classes
-//--------
-
-use \clearos\apps\samba\Samba as Samba;
-use \clearos\apps\samba\Winbind as Winbind;
-
-clearos_load_library('samba/Samba');
-clearos_load_library('samba/Winbind');
-
-// Exceptions
-//-----------
-
-use \Exception as Exception;
-
-///////////////////////////////////////////////////////////////////////////////
-// M A I N
-///////////////////////////////////////////////////////////////////////////////
-
-//--------------------------------------------------------------------
-// Command line options
-//--------------------------------------------------------------------
-
-$short_options  = '';
-$short_options .= 'f';  // Force
-
-$options = getopt($short_options);
-
-$force = isset($options['f']) ? TRUE : FALSE;
-
-//--------------------------------------------------------------------
-// Initialization
-//--------------------------------------------------------------------
-
-$samba = new Samba();
-$samba->initialize($force);
-
-try {
-    $winbind = new Winbind();
-    $winbind->set_boot_state(TRUE);
-    $winbind->set_running_state(TRUE);
-} catch (Exception $e) {
-    // Not fatal
+if ($form_type === 'edit') {
+    $buttons = array(
+        form_submit_custom('submit', lang('samba_change_password')),
+        anchor_cancel('/app/samba/administrator')
+    );
+} else {
+    $buttons = array(
+        anchor_custom('/app/samba/administrator/edit', lang('samba_change_password')),
+    );
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Form
+///////////////////////////////////////////////////////////////////////////////
+
+echo form_open('samba/administrator/edit');
+echo form_header(lang('samba_administrator_account'));
+
+echo field_input('administrator', $administrator, lang('samba_account_username'), TRUE);
+
+if ($form_type == 'edit')  {
+    echo field_password('password', '', lang('base_password'));
+    echo field_password('verify', '', lang('base_verify'));
+}
+
+echo field_button_set($buttons);
+
+echo form_footer();
+echo form_close();

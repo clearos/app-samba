@@ -1,12 +1,11 @@
-#!/usr/clearos/sandbox/usr/bin/php
 <?php
 
 /**
- * ClearOS Samba initializtion.
+ * Samba computers view.
  *
- * @category   Apps
- * @package    Accounts
- * @subpackage Scripts
+ * @category   ClearOS
+ * @package    Samba
+ * @subpackage Views
  * @author     ClearFoundation <developer@clearfoundation.com>
  * @copyright  2011 ClearFoundation
  * @license    http://www.gnu.org/copyleft/gpl.html GNU General Public License version 3 or later
@@ -26,61 +25,61 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-//
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.  
+//  
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
-// B O O T S T R A P
+// Load dependencies
 ///////////////////////////////////////////////////////////////////////////////
 
-$bootstrap = getenv('CLEAROS_BOOTSTRAP') ? getenv('CLEAROS_BOOTSTRAP') : '/usr/clearos/framework/shared';
-require_once $bootstrap . '/bootstrap.php';
+$this->lang->load('samba');
 
 ///////////////////////////////////////////////////////////////////////////////
-// D E P E N D E N C I E S
+// Headers
 ///////////////////////////////////////////////////////////////////////////////
 
-// Classes
-//--------
-
-use \clearos\apps\samba\Samba as Samba;
-use \clearos\apps\samba\Winbind as Winbind;
-
-clearos_load_library('samba/Samba');
-clearos_load_library('samba/Winbind');
-
-// Exceptions
-//-----------
-
-use \Exception as Exception;
+$headers = array(
+    lang('samba_computer')
+);
 
 ///////////////////////////////////////////////////////////////////////////////
-// M A I N
+// Anchors
 ///////////////////////////////////////////////////////////////////////////////
 
-//--------------------------------------------------------------------
-// Command line options
-//--------------------------------------------------------------------
+$anchors = array();
 
-$short_options  = '';
-$short_options .= 'f';  // Force
+///////////////////////////////////////////////////////////////////////////////
+// Items
+///////////////////////////////////////////////////////////////////////////////
 
-$options = getopt($short_options);
+foreach ($computers as $name => $details) {
+    // Remove trailing $
+    $name = preg_replace('/\$$/', '', $name);
 
-$force = isset($options['f']) ? TRUE : FALSE;
+    $default_action = '/app/samba/computers/delete/' . $name;
 
-//--------------------------------------------------------------------
-// Initialization
-//--------------------------------------------------------------------
+    $item['title'] = $name;
+    $item['action'] = $default_action;
 
-$samba = new Samba();
-$samba->initialize($force);
+    $item['anchors'] = button_set(
+        array(anchor_delete($default_action))
+    );
 
-try {
-    $winbind = new Winbind();
-    $winbind->set_boot_state(TRUE);
-    $winbind->set_running_state(TRUE);
-} catch (Exception $e) {
-    // Not fatal
+    $item['details'] = array(
+        $name,
+    );
+
+    $items[] = $item;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Summary table
+///////////////////////////////////////////////////////////////////////////////
+
+echo summary_table(
+    lang('samba_computers'),
+    $anchors,
+    $headers,
+    $items
+);

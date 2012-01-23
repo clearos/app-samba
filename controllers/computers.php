@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Samba global settings controller.
+ * Samba computers controller.
  *
  * @category   Apps
  * @package    Samba
@@ -34,7 +34,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * Samba global settings controller.
+ * Samba computers controller.
  *
  * @category   Apps
  * @package    Samba
@@ -45,28 +45,82 @@
  * @link       http://www.clearfoundation.com/docs/developer/apps/samba/
  */
 
-class Settings extends ClearOS_Controller
+class Computers extends ClearOS_Controller
 {
     /**
-     * Samba global settings controller.
+     * Samba computers controller.
      *
      * @return view
      */
 
     function index()
     {
-        $this->_common('view');
+        // Load dependencies
+        //------------------
+
+        $this->lang->load('samba');
+        $this->load->library('samba/Computer');
+
+        // Load view data
+        //---------------
+
+        try {
+            $data['computers'] = $this->computer->get_computers();
+        } catch (Exception $e) {
+            $this->page->view_exception($e);
+            return;
+        }
+
+        // Load views
+        //-----------
+
+        $this->page->view_form('samba/computers', $data, lang('samba_computers'));
     }
 
     /**
-     * Edit view.
+     * Delete view.
+     *
+     * @param string $computer computer
      *
      * @return view
      */
 
-    function edit()
+    function delete($computer)
     {
-        $this->_common('edit');
+        $confirm_uri = '/app/samba/computers/destroy/' . $computer;
+        $cancel_uri = '/app/samba/computers';
+        $items = array($computer);
+
+        $this->page->view_confirm_delete($confirm_uri, $cancel_uri, $items);
+    }
+
+   /**
+     * Destroys computer.
+     *
+     * @param string $computer computer
+     *
+     * @return view
+     */
+
+    function destroy($computer)
+    {
+        // Load libraries
+        //---------------
+
+        $this->load->library('samba/Computer');
+
+        // Handle delete
+        //--------------
+
+        try {
+            $this->computer->delete_computer($computer);
+
+            $this->page->set_status_deleted();
+            redirect('/samba/computers');
+        } catch (Exception $e) {
+            $this->page->view_exception($e);
+            return;
+        }
     }
 
     /**
@@ -96,6 +150,7 @@ class Settings extends ClearOS_Controller
         $this->lang->load('base');
         $this->lang->load('samba');
         $this->load->library('samba/Samba');
+        $this->load->library('samba/Nmbd');
 
         // Set validation rules
         //---------------------
