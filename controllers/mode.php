@@ -163,13 +163,23 @@ class Mode extends ClearOS_Controller
                 Samba::MODE_BDC => lang('samba_bdc'),
             );
 
+            $ad_modes = array(
+                Samba::MODE_AD_CONNECTOR => lang('samba_active_directory_connector'),
+            );
+
             $server_mode = $this->mode->get_mode();
 
             $data['should_be_pdc_warning'] = FALSE;
             $data['should_be_bdc_warning'] = FALSE;
-             $data['unsupported_bdc_warning'] = FALSE;
+            $data['unsupported_bdc_warning'] = FALSE;
+            $data['ad_mode'] = FALSE;
 
-            if ($server_mode === Mode_Engine::MODE_MASTER) {
+            if ($data['mode'] === Samba::MODE_AD_CONNECTOR) {
+                $data['ad_mode'] = TRUE;
+                $data['mode_read_only'] = TRUE;
+                $data['domain_read_only'] = TRUE;
+                $data['modes'] = $ad_modes;
+            } else if ($server_mode === Mode_Engine::MODE_MASTER) {
                 $data['mode_read_only'] = TRUE;
                 $data['domain_read_only'] = FALSE;
                 $data['should_be_pdc_warning'] = ($data['mode'] != Samba::MODE_PDC) ? TRUE : FALSE;

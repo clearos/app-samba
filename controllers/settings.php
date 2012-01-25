@@ -30,6 +30,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
+// D E P E N D E N C I E S
+///////////////////////////////////////////////////////////////////////////////
+
+use \clearos\apps\samba\Samba as Samba;
+
+///////////////////////////////////////////////////////////////////////////////
 // C L A S S
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -128,6 +134,7 @@ class Settings extends ClearOS_Controller
             $data['form_type'] = $form_type;
             $data['netbios'] = $this->samba->get_netbios_name();
             $data['comment'] = $this->samba->get_server_string();
+            $data['mode'] = $this->samba->get_mode();
             $data['homes'] = $this->samba->get_homes_state();
             $data['wins_support'] = $this->samba->get_wins_support();
             $data['wins_server'] = $this->samba->get_wins_server();
@@ -139,7 +146,7 @@ class Settings extends ClearOS_Controller
             $this->page->view_exception($e);
             return;
         }
-
+        
         // Load views
         //-----------
 

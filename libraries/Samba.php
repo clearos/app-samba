@@ -56,6 +56,7 @@ clearos_load_language('samba');
 // Classes
 //--------
 
+use \clearos\apps\accounts\Accounts_Configuration as Accounts_Configuration;
 use \clearos\apps\base\File as File;
 use \clearos\apps\base\Shell as Shell;
 use \clearos\apps\base\Software as Software;
@@ -70,6 +71,7 @@ use \clearos\apps\samba\Smbd as Smbd;
 use \clearos\apps\samba\Winbind as Winbind;
 use \clearos\apps\users\User_Factory as User_Factory;
 
+clearos_load_library('accounts/Accounts_Configuration');
 clearos_load_library('base/File');
 clearos_load_library('base/Shell');
 clearos_load_library('base/Software');
@@ -88,6 +90,7 @@ clearos_load_library('users/User_Factory');
 //-----------
 
 use \Exception as Exception;
+use \clearos\apps\accounts\Accounts_Driver_Not_Set_Exception as Accounts_Driver_Not_Set_Exception;
 use \clearos\apps\base\Engine_Exception as Engine_Exception;
 use \clearos\apps\base\File_No_Match_Exception as File_No_Match_Exception;
 use \clearos\apps\base\Validation_Exception as Validation_Exception;
@@ -95,6 +98,7 @@ use \clearos\apps\samba\Samba_Connection_Exception as Samba_Connection_Exception
 use \clearos\apps\samba\Samba_Not_Initialized_Exception as Samba_Not_Initialized_Exception;
 use \clearos\apps\samba\Samba_Share_Not_Found_Exception as Samba_Share_Not_Found_Exception;
 
+clearos_load_library('accounts/Accounts_Driver_Not_Set_Exception');
 clearos_load_library('base/Engine_Exception');
 clearos_load_library('base/File_No_Match_Exception');
 clearos_load_library('base/Validation_Exception');
@@ -128,6 +132,7 @@ class Samba extends Software
     const FILE_CONFIG = '/etc/samba/smb.conf';
     const FILE_DOMAIN_SID = '/etc/samba/domainsid';
     const FILE_LOCAL_SID = '/etc/samba/localsid';
+    const FILE_INITIALIZED = '/var/clearos/samba/initialized';
     const FILE_LOCAL_SYSTEM_INITIALIZED = '/var/clearos/samba/initialized_local';
     const FILE_DOMAIN_SID_CACHE = '/var/clearos/samba/domain_sid_cache';
     const PATH_STATE = '/var/lib/samba';
@@ -142,6 +147,7 @@ class Samba extends Software
     const MODE_PDC = 'pdc';
     const MODE_BDC = 'bdc';
     const MODE_MEMBER = 'member';
+    const MODE_AD_CONNECTOR = 'adconnector';
     const MODE_SIMPLE_SERVER = 'simple';
     const MODE_CUSTOM = 'custom';
 
@@ -539,10 +545,10 @@ class Samba extends Software
     /**
      * Returns mode.
      *
-     *                  +  PDC  +  BDC  +  Simple
-     *    Domain Master |   y   |   n   |    y
-     *    Domain Logons |   y   |   y   |    y
-     *       [netlogon] |   y   |   -   |    n
+     *                  +  PDC  +  BDC  +  Simple +  AD  +
+     *    Domain Master |   y   |   n   |    y    |   n
+     *    Domain Logons |   y   |   y   |    y    |   n
+     *       [netlogon] |   y   |   -   |    n    |   .
      *
      * @return string mode
      * @throws Engine_Exception
@@ -566,6 +572,8 @@ class Samba extends Software
             return self::MODE_PDC;
         else if (!$domain_master && $domain_logons)
             return self::MODE_BDC;
+        else if (!$domain_master && !$domain_logons)
+            return self::MODE_AD_CONNECTOR;
         else if ($domain_master && $domain_logons && !$netlogon)
             return self::MODE_SIMPLE_SERVER;
         else
@@ -1199,18 +1207,69 @@ class Samba extends Software
      * @throws Engine_Exception
      */
 
-    public function initialize($force)
+    public function initialize($force = FALSE)
     {
         clearos_profile(__METHOD__, __LINE__);
+
+        // Bail if initialized
+        //--------------------
+
+        if ($this->is_initialized() && !$force)
+            return;
+
+        // Bail if driver not set
+        //-----------------------
+
+        try {
+            $accounts = new Accounts_Configuration();
+            $driver = $accounts->get_driver();
+        } catch (Accounts_Driver_Not_Set_Exception $e) {
+            return;
+        }
+
+        // If Active Directory, it's really already initialized
+        // Initialize if LDAP is available
+        //--------------------------------
+        // TODO: this should only happen when accounts system is initialized
 
         $sysmode = Mode_Factory::create();
         $mode = $sysmode->get_mode();
 
-        if (($mode === Mode_Engine::MODE_MASTER) || ($mode === Mode_Engine::MODE_STANDALONE)) {
+        if ($driver === 'active_directory') {
+            $this->initialize_ad_system();
+        } else if (($mode === Mode_Engine::MODE_MASTER) || ($mode === Mode_Engine::MODE_STANDALONE)) {
             $this->initialize_master_system('CLEARSYSTEM', NULL, $force);
         } else if ($mode === Mode_Engine::MODE_SLAVE) {
             $this->initialize_slave_system();
         }
+
+        $this->_set_initialized();
+    }
+
+    /**
+     * Initializes AD node with the necessary Samba elements.
+     *
+     * @return void
+     * @throws Engine_Exception
+     */
+
+    public function initialize_ad_system()
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        // Start SMB and NMB
+        //------------------
+
+        $nmbd = new Nmbd();
+        $smbd = new Smbd();
+
+        $nmbd->set_boot_state(TRUE);
+        $smbd->set_boot_state(TRUE);
+        $nmbd->set_running_state(TRUE);
+        $smbd->set_running_state(TRUE);
+
+        // There's nothing to do locally
+        $this->set_local_system_initialized(TRUE);
     }
 
     /**
@@ -1341,6 +1400,26 @@ class Samba extends Software
         clearos_profile(__METHOD__, __LINE__);
 
         $file = new File(Samba::FILE_LOCAL_SYSTEM_INITIALIZED);
+
+        if ($file->exists())
+            return TRUE;
+        else
+            return FALSE;
+    }
+
+    /**
+     * Check routine for identifying special shares.
+     *
+     * @param string $name special share name name
+     *
+     * @return boolean TRUE if share name is special
+     */
+
+    public function is_initialized()
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        $file = new File(self::FILE_INITIALIZED);
 
         if ($file->exists())
             return TRUE;
@@ -2028,6 +2107,23 @@ class Samba extends Software
         $state_value = ($state) ? 'Yes' : 'No';
 
         $this->_set_share_info($share, 'available', $state_value);
+    }
+
+    /**
+     * Sets winbind separator.
+     *
+     * @param string $separator separator
+     *
+     * @return void
+     * @throws Validation_Exception, Engine_Exception
+     */
+
+    public function set_winbind_separator($separator)
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        // TODO: internal only for now - should add validation
+        $this->_set_share_info('global', 'winbind separator', $separator);
     }
 
     /**
@@ -2894,6 +2990,23 @@ class Samba extends Software
 
         $shell = new Shell();
         $exitcode = $shell->Execute(self::COMMAND_NET, "idmap secret '*' $password", TRUE, $options);
+    }
+
+    /**
+     * Sets initialized flag.
+     *
+     * @return void
+     * @throws Engine_Exception
+     */
+
+    public function _set_initialized()
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        $file = new File(self::FILE_INITIALIZED);
+
+        if (! $file->exists())
+            $file->create('root', 'root', '0644');
     }
 
     /**

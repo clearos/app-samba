@@ -30,6 +30,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
+// D E P E N D E N C I E S
+///////////////////////////////////////////////////////////////////////////////
+
+use \clearos\apps\samba\Samba as Samba;
+
+///////////////////////////////////////////////////////////////////////////////
 // C L A S S
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -135,10 +141,15 @@ class Administrator extends ClearOS_Controller
         try {
             $data['form_type'] = $form_type;
             $data['administrator'] = $this->samba->get_administrator_account();
+            $data['mode'] = $this->samba->get_mode();
         } catch (Exception $e) {
             $this->page->view_exception($e);
             return;
         }
+
+        // Bail in AD mode!
+        if ($data['mode'] === Samba::MODE_AD_CONNECTOR)
+            return;
 
         // Load views
         //-----------

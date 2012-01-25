@@ -1,4 +1,5 @@
 <?php
+$lang['samba_active_directory_connector'] = 'Active Directory Connector';
 $lang['samba_app_name'] = 'Windows Networking';
 $lang['samba_app_description'] = 'Windows Networking description...'; // FIXME
 $lang['samba_idmap_backend_invalid'] = 'IDMAP backend is invalid.';

@@ -1,6 +1,20 @@
 #!/bin/sh
 
+# FIXME: add a quick test to see if this is necessary (?)
 [ -x /usr/sbin/samba-init ] && /usr/sbin/samba-init >/dev/null 2>&1
 [ -x /usr/sbin/add-windows-group-info ] && /usr/sbin/add-windows-group-info >/dev/null 2>&1
+
+# Bail if automagic is disabled
+#------------------------------
+
+[ -e /etc/init.d/functions-automagic ] && source /etc/init.d/functions-automagic
+[ -e /etc/sysconfig/automagic ] && source /etc/sysconfig/automagic
+[ -e /etc/sysconfig/samba ] && source /etc/sysconfig/samba
+
+if [ "$AUTOMAGIC" == "off" ]; then
+        return
+fi
+
+sed -i -e "s/^interfaces.*/interfaces = lo $AUTOMAGIC_LANIFS/" /etc/samba/smb.conf
 
 exit 0
