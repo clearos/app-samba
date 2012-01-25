@@ -46,6 +46,7 @@ $app['requires'] = array(
 $app['core_requires'] = array(
     'app-network-core', 
     'app-openldap-directory-core', 
+    'app-samba-extension-core',
     'csplugin-filewatch',
     'samba-client >= 3.6.1',
     'samba-winbind >= 3.6.1',

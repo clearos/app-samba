@@ -1077,7 +1077,8 @@ class Samba extends Software
         // Set the winadmin password
         //--------------------------
 
-        $this->set_administrator_password($password);
+        $user = User_Factory::create(self::CONSTANT_WINADMIN_USERNAME);
+        $user->reset_password($password, $password, self::CONSTANT_WINADMIN_USERNAME);
 
         // Set the netbios name and workgroup
         //-----------------------------------
@@ -1130,7 +1131,7 @@ class Samba extends Software
                 $this->_net_rpc_join($password);
 
                 $net_error = '';
-                continue;
+                break;
             } catch (Engine_Exception $e) {
                 $net_error = clearos_exception_message($e);
             }
@@ -2629,7 +2630,7 @@ class Samba extends Software
      * @throws Engine_Exception
      */
 
-    protected function _net_grant_default_privileges($password)
+    protected function _net_grant_default_privileges($password, $target = '127.0.0.1')
     {
         clearos_profile(__METHOD__, __LINE__);
 
@@ -2638,7 +2639,7 @@ class Samba extends Software
 
         $shell = new Shell();
         $shell->Execute(self::COMMAND_NET, 'rpc rights grant "' . $domain . '\Domain Admins" ' .
-            self::DEFAULT_ADMIN_PRIVS . ' -U winadmin%' . $password, TRUE, $options);
+            self::DEFAULT_ADMIN_PRIVS . ' -I ' . $target . ' -U winadmin%' . $password, TRUE, $options);
     }
 
     /**
@@ -2651,7 +2652,7 @@ class Samba extends Software
      * @throws Engine_Exception
      */
 
-    protected function _net_rpc_join($password)
+    protected function _net_rpc_join($password, $target = '127.0.0.1')
     {
         clearos_profile(__METHOD__, __LINE__);
 
@@ -2661,8 +2662,8 @@ class Samba extends Software
         $options['stdin'] = TRUE;
 
         $shell = new Shell();
-        $shell->Execute(self::COMMAND_NET, 'rpc join -W ' . $domain . ' -S ' .$netbios_name .
-            ' -U winadmin%' . $password, TRUE, $options);
+        $shell->execute(self::COMMAND_NET, 'rpc join -W ' . $domain . ' -S ' .$netbios_name .
+            ' -I ' . $target .  ' -U winadmin%' . $password, TRUE, $options);
     }
 
     /**

@@ -27,6 +27,7 @@ License: LGPLv3
 Requires: app-base-core
 Requires: app-network-core
 Requires: app-openldap-directory-core
+Requires: app-samba-extension-core
 Requires: csplugin-filewatch
 Requires: samba-client >= 3.6.1
 Requires: samba-winbind >= 3.6.1
