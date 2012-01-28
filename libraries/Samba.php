@@ -2195,6 +2195,10 @@ class Samba extends Software
         // Change smb.conf
         $this->_set_share_info('global', 'workgroup', $workgroup);
 
+        // In AD mode, we're done
+        if ($this->mode() === self::MODE_AD_CONNECTOR)
+            return;
+
         // LDAP changes on master
         $sysmode = Mode_Factory::create();
         $mode = $sysmode->get_mode();
@@ -2777,6 +2781,10 @@ class Samba extends Software
     protected function _clean_secrets_file($winpassword = NULL)
     {
         clearos_profile(__METHOD__, __LINE__);
+
+        // In AD mode, we're done
+        if ($this->mode() === self::MODE_AD_CONNECTOR)
+            return;
 
         $ldap = new OpenLDAP_Driver();
 

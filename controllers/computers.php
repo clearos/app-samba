@@ -70,17 +70,22 @@ class Computers extends ClearOS_Controller
         // Load view data
         //---------------
 
+        // Bail in AD mode!
         try {
-            $data['computers'] = $this->computer->get_computers();
             $data['mode'] = $this->samba->get_mode();
+            if ($data['mode'] === Samba::MODE_AD_CONNECTOR)
+                return;
         } catch (Exception $e) {
             $this->page->view_exception($e);
             return;
         }
 
-        // Bail in AD mode!
-        if ($data['mode'] === Samba::MODE_AD_CONNECTOR)
+        try {
+            $data['computers'] = $this->computer->get_computers();
+        } catch (Exception $e) {
+            $this->page->view_exception($e);
             return;
+        }
 
         // Load views
         //-----------

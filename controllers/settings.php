@@ -134,7 +134,7 @@ class Settings extends ClearOS_Controller
             $data['form_type'] = $form_type;
             $data['netbios'] = $this->samba->get_netbios_name();
             $data['comment'] = $this->samba->get_server_string();
-            $data['mode'] = $this->samba->get_mode();
+            $data['ad_mode'] = ($this->samba->get_mode() === Samba::MODE_AD_CONNECTOR) ? TRUE : FALSE;
             $data['homes'] = $this->samba->get_homes_state();
             $data['wins_support'] = $this->samba->get_wins_support();
             $data['wins_server'] = $this->samba->get_wins_server();
