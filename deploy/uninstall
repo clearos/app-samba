@@ -8,6 +8,11 @@ if [ -e /var/clearos/samba/initialized ]; then
     rm -f /var/clearos/samba/initialized
 fi
 
+if [ -e /var/clearos/samba/local_initialized ]; then
+    logger -p local6.notice -t installer "app-samba-core - removing Samba local initialization flag"
+    rm -f /var/clearos/samba/local_initialized
+fi
+
 if [ -e /var/clearos/samba/domain_sid_cache ]; then
     logger -p local6.notice -t installer "app-samba-core - removing Samba SID cache"
     rm -f /var/clearos/samba/domain_sid_cache
