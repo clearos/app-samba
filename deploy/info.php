@@ -56,6 +56,7 @@ $app['core_requires'] = array(
 
 $app['core_file_manifest'] = array( 
     'filewatch-samba-accounts.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-accounts.conf'),
+    'filewatch-samba-network.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-network.conf'),
     'filewatch-samba-configuration.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-configuration.conf'),
     'smb.ldap.conf' => array( 'target' => '/var/clearos/ldap/synchronize/smb.ldap.conf' ),
     'smb.winbind.conf' => array( 'target' => '/var/clearos/ldap/synchronize/smb.winbind.conf' ),
@@ -69,6 +70,10 @@ $app['core_file_manifest'] = array(
     ),
     'samba-add-machine' => array(
         'target' => '/usr/sbin/samba-add-machine',
+        'mode' => '0755',
+    ),
+    'samba-homes' => array(
+        'target' => '/usr/sbin/samba-homes',
         'mode' => '0755',
     ),
     'samba-init' => array(

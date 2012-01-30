@@ -54,8 +54,10 @@ install -D -m 0755 packaging/add-samba-directories %{buildroot}/usr/sbin/add-sam
 install -D -m 0755 packaging/add-windows-group-info %{buildroot}/usr/sbin/add-windows-group-info
 install -D -m 0644 packaging/filewatch-samba-accounts.conf %{buildroot}/etc/clearsync.d/filewatch-samba-accounts.conf
 install -D -m 0644 packaging/filewatch-samba-configuration.conf %{buildroot}/etc/clearsync.d/filewatch-samba-configuration.conf
+install -D -m 0644 packaging/filewatch-samba-network.conf %{buildroot}/etc/clearsync.d/filewatch-samba-network.conf
 install -D -m 0644 packaging/nmb.php %{buildroot}/var/clearos/base/daemon/nmb.php
 install -D -m 0755 packaging/samba-add-machine %{buildroot}/usr/sbin/samba-add-machine
+install -D -m 0755 packaging/samba-homes %{buildroot}/usr/sbin/samba-homes
 install -D -m 0755 packaging/samba-init %{buildroot}/usr/sbin/samba-init
 install -D -m 0644 packaging/smb.ldap.conf %{buildroot}/var/clearos/ldap/synchronize/smb.ldap.conf
 install -D -m 0644 packaging/smb.php %{buildroot}/var/clearos/base/daemon/smb.php
@@ -109,8 +111,10 @@ exit 0
 /usr/sbin/add-windows-group-info
 /etc/clearsync.d/filewatch-samba-accounts.conf
 /etc/clearsync.d/filewatch-samba-configuration.conf
+/etc/clearsync.d/filewatch-samba-network.conf
 /var/clearos/base/daemon/nmb.php
 /usr/sbin/samba-add-machine
+/usr/sbin/samba-homes
 /usr/sbin/samba-init
 /var/clearos/ldap/synchronize/smb.ldap.conf
 /var/clearos/base/daemon/smb.php
