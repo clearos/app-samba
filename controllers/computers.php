@@ -66,6 +66,7 @@ class Computers extends ClearOS_Controller
 
         $this->lang->load('samba');
         $this->load->library('samba/Computer');
+        $this->load->library('samba/Samba');
 
         // Load view data
         //---------------
