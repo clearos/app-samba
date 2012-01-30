@@ -1135,8 +1135,6 @@ class Samba extends Software
                 // Grant default privileges to winadmin et al
                 $this->_net_grant_default_privileges($password);
 
-                // If PDC, join the local system to itself
-                $this->_net_rpc_join($password);
 
                 $net_error = '';
                 break;
@@ -1144,6 +1142,9 @@ class Samba extends Software
                 $net_error = clearos_exception_message($e);
             }
         }
+
+        // If PDC, join the local system to itself
+        $this->_net_rpc_join($password);
 
         if (! empty($net_error))
             throw new Engine_Exception($net_error);
@@ -1310,7 +1311,7 @@ class Samba extends Software
         //--------------------------------------------
 
         $this->set_mode(Samba::MODE_PDC);
-        $this->_clean_secrets_file($password);
+        $this->_update_secrets($password);
     }
 
     /**
@@ -1362,7 +1363,7 @@ class Samba extends Software
         $this->set_netbios_name($netbios);
         $this->set_workgroup($workgroup);
         $this->set_wins_server_and_support($wins, FALSE);
-        $this->_clean_secrets_file($password);
+        $this->_update_secrets($password);
 
         // Join system to domain
         //----------------------
@@ -1551,8 +1552,13 @@ class Samba extends Software
         $user = User_Factory::create(self::CONSTANT_WINADMIN_USERNAME);
         $user->reset_password($password, $password, self::CONSTANT_WINADMIN_USERNAME);
 
-        // TODO: not sure why we do this
-        $this->_clean_secrets_file($password);
+        // Rejoin for good measure (hard time getting net rpc join to run consistentl)
+        if ($this->get_mode() === self::MODE_PDC) {
+            $ldap = new OpenLDAP_Driver();
+            $ldap->add_computer($this->get_netbios_name());
+        }
+
+        $this->_net_rpc_join($password);
     }
 
     /**
@@ -1852,14 +1858,24 @@ class Samba extends Software
         // This is an expensive call, so bail if nothing has changed
         $old_name = $this->get_netbios_name();
 
-        if ($netbios_name == $old_name)
+        if ($netbios_name === $old_name)
             return;
 
         // Change smb.conf
         $this->_set_share_info('global', 'netbios name', $netbios_name);
 
+        // In AD mode, we're done
+        if ($this->get_mode() === self::MODE_AD_CONNECTOR)
+            return;
+
+        // Change the "Computers" entry
+        // FIXME: this will barf on BDC unless referrals are working
+        $ldap = new OpenLDAP_Driver();
+        $ldap->add_computer($netbios_name);
+        $ldap->delete_computer($old_name);
+
         // Clean up secrets file
-        $this->_clean_secrets_file();
+        $this->_update_secrets();
     }
 
     /**
@@ -2209,7 +2225,7 @@ class Samba extends Software
         }
 
         // Clean up secrets file
-        $this->_clean_secrets_file();
+        $this->_update_secrets();
     }
 
     /**
@@ -2756,14 +2772,61 @@ class Samba extends Software
     {
         clearos_profile(__METHOD__, __LINE__);
 
-        $domain = $this->get_workgroup();
+        $nmbd = new Nmbd();
+        $smbd = new Smbd();
+        $winbind = new Winbind();
+
+        $nmbd_wasrunning = FALSE;
+        $smbd_wasrunning = FALSE;
+        $winbind_wasrunning = FALSE;
+
+        if ($winbind->is_installed()) {
+            $winbind_wasrunning = $winbind->get_running_state();
+            if (! $winbind_wasrunning)
+                $winbind->set_running_state(TRUE);
+        }
+
+        if ($nmbd->is_installed()) {
+            $nmbd_wasrunning = $nmbd->get_running_state();
+            if (! $nmbd_wasrunning)
+                $nmbd->set_running_state(TRUE);
+        }
+
+        if ($smbd->is_installed()) {
+            $smbd_wasrunning = $smbd->get_running_state();
+            if (! $smbd_wasrunning)
+                $smbd->set_running_state(TRUE);
+        }
+
         $netbios_name = $this->get_netbios_name();
+
+        $shell = new Shell();
 
         $options['stdin'] = TRUE;
 
-        $shell = new Shell();
-        $shell->execute(self::COMMAND_NET, 'rpc join -W ' . $domain . ' -S ' .$netbios_name .
-            ' -I ' . $target .  ' -U winadmin%' . $password, TRUE, $options);
+        for ($inx = 1; $inx < 5; $inx++) {
+            try {
+                sleep(2);
+                $shell->execute(self::COMMAND_NET, 'rpc join -S ' .$netbios_name .
+                    ' -I ' . $target .  ' -U winadmin%' . $password, TRUE, $options);
+                $succeeded = TRUE;
+                break;
+            } catch (Exception $e) {
+                // Try again
+            }
+        }
+
+        // TODO: Not the end of the world.  Log it?
+        // if (! $succeeded)
+
+        if (! $smbd_wasrunning)
+            $smbd->set_running_state(FALSE);
+
+        if (!$nmbd_wasrunning)
+            $nmbd->set_running_state(FALSE);
+
+        if (!$winbind_wasrunning)
+            $winbind->set_running_state(FALSE);
     }
 
     /**
@@ -2778,7 +2841,7 @@ class Samba extends Software
      * @throws Engine_Exception
      */
 
-    protected function _clean_secrets_file($winpassword = NULL)
+    protected function _update_secrets($winpassword = NULL)
     {
         clearos_profile(__METHOD__, __LINE__);
 
@@ -2830,24 +2893,6 @@ class Samba extends Software
 
         if ($winbind_wasrunning)
             $winbind->set_running_state(TRUE);
-
-        if (! empty($winpassword)) {
-            $succeeded = FALSE;
-
-            for ($inx = 1; $inx < 5; $inx++) {
-                try {
-                    sleep(1);
-                    $this->_net_rpc_join($winpassword);
-                    $succeeded = TRUE;
-                    break;
-                } catch (Exception $e) {
-                    // Try again
-                }
-            }
-
-            // TODO: Not the end of the world.  Log it?
-            // if (! $succeeded)
-        }
     }
 
     /**

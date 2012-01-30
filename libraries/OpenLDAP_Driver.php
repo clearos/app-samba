@@ -164,8 +164,11 @@ class OpenLDAP_Driver extends Engine
 
         Validation_Exception::is_valid($this->validate_computer($name));
 
-        if (! preg_match('/\$$/', $name))
-            $name = "$name$";
+        // Append dollar sign and uppercase
+        if (!preg_match('/\$$/', $name))
+            $name = $name . '$';
+
+        $name = strtolower($name);
 
         if ($this->ldaph == NULL)
             $this->_get_ldap_handle();
@@ -204,6 +207,12 @@ class OpenLDAP_Driver extends Engine
     public function delete_computer($name)
     {
         clearos_profile(__METHOD__, __LINE__);
+
+        // Append dollar sign and uppercase
+        if (!preg_match('/\$$/', $name))
+            $name = $name . '$';
+
+        $name = strtolower($name);
 
         if ($this->ldaph === NULL)
             $this->_get_ldap_handle();

@@ -114,6 +114,12 @@ class Computer extends Engine
     {
         clearos_profile(__METHOD__, __LINE__);
 
+        // Append dollar sign and uppercase
+        if (!preg_match('/\$$/', $name))
+            $name = $name . '$';
+
+        $name = strtolower($name);
+
         Validation_Exception::is_valid($this->validate_computer($name));
 
         $ldap = new OpenLDAP_Driver();
@@ -134,9 +140,11 @@ class Computer extends Engine
     {
         clearos_profile(__METHOD__, __LINE__);
 
-        // Append dollar sign
+        // Append dollar sign and uppercase
         if (!preg_match('/\$$/', $name))
             $name = $name . '$';
+
+        $name = strtolower($name);
 
         Validation_Exception::is_valid($this->validate_computer($name));
 
@@ -177,7 +185,7 @@ class Computer extends Engine
     {
         clearos_profile(__METHOD__, __LINE__);
 
-        if (! preg_match('/^([a-z0-9_\-\.]+)\$$/', $name))
+        if (! preg_match('/^([a-zA-Z0-9_\-\.]+)\$$/', $name))
             return lang('samba_computer_name_is_invalid');
     }
 }
