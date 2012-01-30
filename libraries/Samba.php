@@ -2196,7 +2196,7 @@ class Samba extends Software
         $this->_set_share_info('global', 'workgroup', $workgroup);
 
         // In AD mode, we're done
-        if ($this->mode() === self::MODE_AD_CONNECTOR)
+        if ($this->get_mode() === self::MODE_AD_CONNECTOR)
             return;
 
         // LDAP changes on master
@@ -2783,7 +2783,7 @@ class Samba extends Software
         clearos_profile(__METHOD__, __LINE__);
 
         // In AD mode, we're done
-        if ($this->mode() === self::MODE_AD_CONNECTOR)
+        if ($this->get_mode() === self::MODE_AD_CONNECTOR)
             return;
 
         $ldap = new OpenLDAP_Driver();
