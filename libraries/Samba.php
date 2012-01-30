@@ -1648,6 +1648,27 @@ class Samba extends Software
     }
 
     /**
+     * Sets state of homes share.
+     *
+     * @param boolean $state state of homes share
+     *
+     * @return void
+     * @throws Engine_Exception
+     */
+
+    public function set_homes_state($state)
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        Validation_Exception::is_valid($this->validate_homes_state($state));
+
+        if ($state)
+            $this->set_share_availability('homes', TRUE);
+        else
+            $this->set_share_availability('homes', FALSE);
+    }
+
+    /**
      * Sets local master.
      *
      * @param  string  $state  local master state
@@ -2327,6 +2348,22 @@ class Samba extends Software
 
         if (! clearos_is_valid_boolean($state))
             return lang('samba_domain_master_setting_invalid');
+    }
+
+    /**
+     * Validation routine for homes state
+     *
+     * @param boolean $state homes state
+     *
+     * @return string error message if homes state is invalid
+     */
+
+    public function validate_homes_state($state)
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        if (! clearos_is_valid_boolean($state))
+            return lang('samba_homes_state_invalid');
     }
 
     /**

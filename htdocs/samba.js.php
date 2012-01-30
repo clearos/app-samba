@@ -70,6 +70,10 @@ $(document).ready(function() {
         changeMode();
     });
 
+    $('#wins_support').change(function() {
+        changeWins();
+    });
+
     // Initialization
     //---------------
 
@@ -116,6 +120,16 @@ function changeMode() {
         $('#profiles_field').hide();
         $('#logon_drive_field').hide();
         $('#logon_script_field').hide();
+    }
+}
+
+function changeWins() {
+    current_wins = $('#wins_support').val();
+
+    if (current_wins == 1) {
+        $('#wins_server').attr('disabled', true);
+    } else {
+        $('#wins_server').attr('disabled', false);
     }
 }
 
