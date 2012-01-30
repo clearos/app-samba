@@ -55,6 +55,16 @@ class Samba extends ClearOS_Controller
 
     function index()
     {
+        // Show account status widget if we're not in a happy state
+        //---------------------------------------------------------
+
+        $this->load->module('accounts/status');
+
+        if ($this->status->unhappy('openldap_directory')) {
+            $this->status->widget('password_policies', 'openldap_directory');
+            return;
+        }
+
         // Load libraries
         //---------------
 
