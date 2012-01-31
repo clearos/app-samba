@@ -70,6 +70,8 @@ $(document).ready(function() {
         changeMode();
     });
 
+    changeWins();
+
     $('#wins_support').change(function() {
         changeWins();
     });

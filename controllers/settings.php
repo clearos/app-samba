@@ -108,10 +108,13 @@ class Settings extends ClearOS_Controller
          
         $this->form_validation->set_policy('netbios', 'samba/Samba', 'validate_netbios_name', TRUE);
         $this->form_validation->set_policy('comment', 'samba/Samba', 'validate_server_string', TRUE);
-        $this->form_validation->set_policy('printing', 'samba/Samba', 'validate_server_string', TRUE);
         $this->form_validation->set_policy('homes', 'samba/Samba', 'validate_homes_state', TRUE);
         $this->form_validation->set_policy('wins_support', 'samba/Samba', 'validate_wins_support');
         $this->form_validation->set_policy('wins_server', 'samba/Samba', 'validate_wins_server');
+
+        if ($this->input->post('printing'))
+            $this->form_validation->set_policy('printing', 'samba/Samba', 'validate_server_string', TRUE);
+
         $form_ok = $this->form_validation->run();
 
         // Handle form submit

@@ -60,8 +60,8 @@ class Samba extends ClearOS_Controller
 
         $this->load->module('accounts/status');
 
-        if ($this->status->unhappy('openldap_directory')) {
-            $this->status->widget('password_policies', 'openldap_directory');
+        if ($this->status->unhappy()) {
+            $this->status->widget('samba');
             return;
         }
 

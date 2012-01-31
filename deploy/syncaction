@@ -5,6 +5,9 @@
 [ -x /usr/sbin/add-windows-group-info ] && /usr/sbin/add-windows-group-info >/dev/null 2>&1
 [ -x /usr/sbin/samba-homes ] && /usr/sbin/samba-homes >/dev/null 2>&1
 
+# TODO: overkill - needs to be called once
+[ -x /usr/sbin/password-policies-synchronize ] && /usr/sbin/password-policies-synchronize >/dev/null 2>&1
+
 # Set interfaces parameter when network changes
 #----------------------------------------------
 

@@ -1117,14 +1117,12 @@ class Samba extends Software
 
         $nmbd = new Nmbd();
         $smbd = new Smbd();
-        $nmbd_wasrunning = $nmbd->get_running_state();
-        $smbd_wasrunning = $smbd->get_running_state();
 
-        if (! $smbd_wasrunning)
-            $smbd->set_running_state(TRUE);
+        $nmbd->set_running_state(TRUE);
+        $smbd->set_running_state(TRUE);
 
-        if (! $nmbd_wasrunning)
-            $nmbd->set_running_state(TRUE);
+        $nmbd->set_boot_state(TRUE);
+        $smbd->set_boot_state(TRUE);
 
         $net_error = ''; 
         
@@ -1134,7 +1132,6 @@ class Samba extends Software
             try {
                 // Grant default privileges to winadmin et al
                 $this->_net_grant_default_privileges($password);
-
 
                 $net_error = '';
                 break;
@@ -1148,18 +1145,6 @@ class Samba extends Software
 
         if (! empty($net_error))
             throw new Engine_Exception($net_error);
-
-        // Stop daemons if that was their previous state
-        //----------------------------------------------
-
-        try {
-            if (! $smbd_wasrunning)
-                $smbd->set_running_state(FALSE);
-            if (! $nmbd_wasrunning)
-                $nmbd->set_running_state(FALSE);
-        } catch (Exception $e) {
-            // Not fatal
-        }
 
         // Update local file permissions
         //------------------------------
@@ -1269,7 +1254,8 @@ class Samba extends Software
         $nmbd->set_running_state(TRUE);
         $smbd->set_running_state(TRUE);
 
-        // There's nothing to do locally
+        // We're done initialization in AD mode.
+        $this->_set_initialized();
         $this->set_local_system_initialized(TRUE);
     }
 
@@ -2841,7 +2827,7 @@ class Samba extends Software
 
         $options['stdin'] = TRUE;
 
-        for ($inx = 1; $inx < 5; $inx++) {
+        for ($inx = 1; $inx < 10; $inx++) {
             try {
                 sleep(2);
                 $shell->execute(self::COMMAND_NET, 'rpc join -S ' .$netbios_name .
@@ -3023,6 +3009,7 @@ class Samba extends Software
 
         // Create temp file
         //-----------------
+
         $new_config->create('root', 'root', '0644');
 
         // Write out the file
