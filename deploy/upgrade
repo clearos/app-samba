@@ -30,3 +30,8 @@ if [ -n "$CHECK" ]; then
     grep -v "^idmap[[:space:]]*gid[[:space:]]*=" /etc/samba/smb.conf > /etc/samba/smb.conf.new
     mv /etc/samba/smb.conf.new /etc/samba/smb.conf
 fi
+
+# Reload clearsyncd
+#------------------
+
+/sbin/service clearsyncd condrestart 2>/dev/null 2>&1

@@ -413,10 +413,10 @@ class OpenLDAP_Driver extends Engine
         $this->_archive_state_files();
 
         // Set Samba
+        $samba->set_mode(Samba::MODE_PDC);
         $samba->set_workgroup($domain);
         $samba->set_password_servers(array());
         $samba->set_realm('');
-        $samba->set_mode(Samba::MODE_PDC);
         $samba->set_wins_server_and_support('', TRUE);
         $samba->set_default_idmap_backend('ldap');
 

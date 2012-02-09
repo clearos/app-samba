@@ -155,14 +155,16 @@ class Initialize extends ClearOS_Controller
         $this->form_validation->set_policy('netbios', 'samba/Samba', 'validate_netbios_name', TRUE);
         $this->form_validation->set_policy('domain', 'samba/Samba', 'validate_workgroup', TRUE);
         $this->form_validation->set_policy('password', 'samba/Samba', 'validate_password', TRUE);
-        $this->form_validation->set_policy('verify', 'samba/Samba', 'validate_password', TRUE);
+
+        if ($this->mode->get_mode() !== Mode_Engine::MODE_SLAVE)
+            $this->form_validation->set_policy('verify', 'samba/Samba', 'validate_password', TRUE);
 
         $form_ok = $this->form_validation->run();
 
         // Extra validation
         //-----------------
 
-        if ($form_ok) {
+        if ($form_ok && ($this->mode->get_mode() !== Mode_Engine::MODE_SLAVE)) {
             if ($this->input->post('password') != $this->input->post('verify')) {
                 $this->form_validation->set_error('verify', lang('base_password_and_verify_do_not_match'));
                 $form_ok = FALSE;

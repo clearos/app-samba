@@ -1053,10 +1053,24 @@ class Samba extends Software
     {
         clearos_profile(__METHOD__, __LINE__);
 
-        if (! $this->loaded)
-            $this->_load();
+        // If this is a BDC, the workgroup should really come from LDAP
+        // Not the samba configuration file.  These should be identical, 
+        // except on initialization.
 
-        return $this->shares['global']['workgroup']['value'];
+        $sysmode = Mode_Factory::create();
+        $mode = $sysmode->get_mode();
+
+        if ($mode === Mode_Engine::MODE_SLAVE) {
+            $ldap = new OpenLDAP_Driver();
+            $workgroup = $ldap->get_domain();
+        } else {
+            if (! $this->loaded)
+                $this->_load();
+
+            $workgroup = $this->shares['global']['workgroup']['value'];
+        }
+
+        return $workgroup;
     }
 
     /**
@@ -1117,34 +1131,29 @@ class Samba extends Software
 
         $nmbd = new Nmbd();
         $smbd = new Smbd();
+        $winbind = new Winbind();
+
+        if ($winbind->get_running_state())
+            $winbind->restart();
+        else
+            $winbind->set_running_state(TRUE);
 
         $nmbd->set_running_state(TRUE);
         $smbd->set_running_state(TRUE);
 
         $nmbd->set_boot_state(TRUE);
         $smbd->set_boot_state(TRUE);
-
-        $net_error = ''; 
-        
-        for ($i = 0; $i < 5; $i++) { 
-            sleep(2); // wait or daemons to start, not atomic
-
-            try {
-                // Grant default privileges to winadmin et al
-                $this->_net_grant_default_privileges($password);
-
-                $net_error = '';
-                break;
-            } catch (Engine_Exception $e) {
-                $net_error = clearos_exception_message($e);
-            }
-        }
+        $winbind->set_boot_state(TRUE);
 
         // If PDC, join the local system to itself
+        //----------------------------------------
+
         $this->_net_rpc_join($password);
 
-        if (! empty($net_error))
-            throw new Engine_Exception($net_error);
+        // Grant default privileges to winadmin et al
+        //-------------------------------------------
+
+        $this->_net_grant_default_privileges($password);
 
         // Update local file permissions
         //------------------------------
@@ -1152,6 +1161,8 @@ class Samba extends Software
         $this->update_local_file_permissions();
 
         // Set the local system initialized flag
+        //--------------------------------------
+
         $this->set_local_system_initialized(TRUE);
     }
 
@@ -1180,8 +1191,9 @@ class Samba extends Software
         $this->update_local_file_permissions();
 
         // Set the local system initialized flag
-        $this->set_local_system_initialized(TRUE);
+        //--------------------------------------
 
+        $this->set_local_system_initialized(TRUE);
     }
 
     /**
@@ -1296,7 +1308,6 @@ class Samba extends Software
         // Handle Samba configuration and post cleanup
         //--------------------------------------------
 
-        $this->set_mode(Samba::MODE_PDC);
         $this->_update_secrets($password);
     }
 
@@ -1310,9 +1321,12 @@ class Samba extends Software
      * @throws Engine_Exception
      */
 
-    public function initialize_slave_system($netbios = NULL, $password = NULL)
+    public function initialize_slave_system($netbios, $password)
     {
         clearos_profile(__METHOD__, __LINE__);
+
+        Validation_Exception::is_valid($this->validate_netbios_name($netbios));
+        Validation_Exception::is_valid($this->validate_password($password));
 
         // Directory needs to be initialized
         //----------------------------------
@@ -1337,42 +1351,37 @@ class Samba extends Software
         $ldap = new OpenLDAP_Driver();
         $workgroup = $ldap->get_domain();
 
-        $wins = $sysmode->get_master_hostname();
-
-        // TODO: hook to SDN to get device name
-        if (empty($netbios)) {
-            $hostnameobj = new Hostname();
-            $netbios = strtoupper($hostnameobj->get()) . 'BDC';
-        }
+        $master = $sysmode->get_master_hostname();
 
         $this->set_mode(Samba::MODE_BDC);
         $this->set_netbios_name($netbios);
         $this->set_workgroup($workgroup);
-        $this->set_wins_server_and_support($wins, FALSE);
+        $this->set_wins_server_and_support($master, FALSE);
         $this->_update_secrets($password);
+
+        $nmbd = new Nmbd();
+        $smbd = new Smbd();
+        $winbind = new Winbind();
+
+        $nmbd->set_boot_state(TRUE);
+        $smbd->set_boot_state(TRUE);
+        $winbind->set_boot_state(TRUE);
+
+        try {
+            $nmbd->set_running_state(TRUE);
+            $smbd->set_running_state(TRUE);
+            if ($winbind->get_running_state())
+                $winbind->restart();
+            else
+                $winbind->set_running_state(TRUE);
+        } catch (Exception $e) {
+            // Not the end of the world 
+        }
 
         // Join system to domain
         //----------------------
-// FIXME: net rpc join over Internet?
 
-/*
-        if (! is_null($password)) {
-            $net_error = ''; 
-            
-            for ($i = 0; $i < 5; $i++) { 
-                sleep(2); // wait or daemons to start, not atomic
-
-                try {
-                    $this->_net_rpc_join($password);
-
-                    $net_error = '';
-                    continue;
-                } catch (Engine_Exception $e) {
-                    $net_error = clearos_exception_message($e);
-                }
-            }
-        }
-*/
+        $this->_net_rpc_join($password, $master);
     }
 
     /**
@@ -1877,9 +1886,11 @@ class Samba extends Software
 
         // Change the "Computers" entry
         // FIXME: this will barf on BDC unless referrals are working
-        $ldap = new OpenLDAP_Driver();
-        $ldap->add_computer($netbios_name);
-        $ldap->delete_computer($old_name);
+        if ($this->get_mode() === self::MODE_PDC) {
+            $ldap = new OpenLDAP_Driver();
+            $ldap->add_computer($netbios_name);
+            $ldap->delete_computer($old_name);
+        }
 
         // Clean up secrets file
         $this->_update_secrets();
@@ -2211,15 +2222,15 @@ class Samba extends Software
 
         $workgroup = strtoupper($workgroup);
 
-        // This is an expensive call, so bail if nothing has changed
-        if ($workgroup == $this->get_workgroup())
-            return;
-
         // Change smb.conf
         $this->_set_share_info('global', 'workgroup', $workgroup);
 
         // In AD mode, we're done
         if ($this->get_mode() === self::MODE_AD_CONNECTOR)
+            return;
+
+        // This is an expensive call, so bail if nothing has changed LDAP-wise
+        if ($workgroup == $this->get_workgroup())
             return;
 
         // LDAP changes on master
@@ -2775,10 +2786,26 @@ class Samba extends Software
 
         $domain = $this->get_workgroup();
         $options['stdin'] = TRUE;
+        $net_error = '';
 
         $shell = new Shell();
-        $shell->Execute(self::COMMAND_NET, 'rpc rights grant "' . $domain . '\Domain Admins" ' .
-            self::DEFAULT_ADMIN_PRIVS . ' -I ' . $target . ' -U winadmin%' . $password, TRUE, $options);
+
+        for ($i = 0; $i < 10; $i++) { 
+            sleep(2); // wait or daemons to start, not atomic
+
+            try {
+                $shell->execute(self::COMMAND_NET, 'rpc rights grant "' . $domain . '\Domain Admins" ' .
+                    self::DEFAULT_ADMIN_PRIVS . ' -I ' . $target . ' -U winadmin%' . $password, TRUE, $options);
+
+                $net_error = '';
+                break;
+            } catch (Engine_Exception $e) {
+                $net_error = clearos_exception_message($e);
+            }
+        }
+
+        if (! empty($net_error))
+            throw new Engine_Exception($net_error);
     }
 
     /**

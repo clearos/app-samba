@@ -71,10 +71,10 @@ class Computers extends ClearOS_Controller
         // Load view data
         //---------------
 
-        // Bail in AD mode!
+        // Bail in AD or BDC mode!
         try {
             $data['mode'] = $this->samba->get_mode();
-            if ($data['mode'] === Samba::MODE_AD_CONNECTOR)
+            if (($data['mode'] === Samba::MODE_AD_CONNECTOR) || ($data['mode'] == Samba::MODE_BDC))
                 return;
         } catch (Exception $e) {
             $this->page->view_exception($e);

@@ -33,6 +33,8 @@
 // Load dependencies
 ///////////////////////////////////////////////////////////////////////////////
 
+use \clearos\apps\samba\Samba as Samba;
+
 $this->lang->load('base');
 $this->lang->load('samba');
 
@@ -58,7 +60,7 @@ if ($read_only) {
     $domain_read_only = TRUE;
 }
 
-if ($ad_mode)
+if ($ad_mode || ($mode == Samba::MODE_BDC))
     $buttons = array();
 
 ///////////////////////////////////////////////////////////////////////////////

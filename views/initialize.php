@@ -73,7 +73,7 @@ echo "</div>";
 ///////////////////////////////////////////////////////////////////////////////
 
 echo "<div id='configuration' style='display:none;'>";
-echo "<form><input type='hidden' id='init_validated' value='$validated'></form>";
+echo "<input type='hidden' id='init_validated' value='$validated'>";
 
 echo form_open('samba/initialize/edit');
 echo form_header($title);

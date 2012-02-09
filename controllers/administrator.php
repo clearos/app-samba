@@ -147,8 +147,8 @@ class Administrator extends ClearOS_Controller
             return;
         }
 
-        // Bail in AD mode!
-        if ($data['mode'] === Samba::MODE_AD_CONNECTOR)
+        // Bail in AD or BDC mode!
+        if (($data['mode'] === Samba::MODE_AD_CONNECTOR) || ($data['mode'] == Samba::MODE_BDC))
             return;
 
         // Load views
