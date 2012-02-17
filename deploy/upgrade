@@ -31,6 +31,9 @@ if [ -n "$CHECK" ]; then
     mv /etc/samba/smb.conf.new /etc/samba/smb.conf
 fi
 
+# TODO: beta upgrade - remove after final 
+sed -i -e 's/^winbind separator = +/#winbind separator = +/' /etc/samba/smb.conf
+
 # Reload clearsyncd
 #------------------
 
