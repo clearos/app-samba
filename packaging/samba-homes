@@ -55,8 +55,10 @@ clearos_load_library('users/User_Manager_Factory');
 //--------
 
 use \clearos\apps\base\Folder as Folder;
+use \clearos\apps\samba\Samba as Samba;
 
 clearos_load_library('base/Folder');
+clearos_load_library('samba/Samba');
 
 // Exceptions
 //-----------
@@ -68,10 +70,17 @@ use \Exception as Exception;
 ///////////////////////////////////////////////////////////////////////////////
 
 $home_basename = '/home';
-$home_group = 'allusers';
 $home_perms = '0700';
 
 try {
+    $samba = new Samba();
+    $mode = $samba->get_mode();
+
+    if ($mode === Samba::MODE_AD_CONNECTOR)
+        $home_group = 'domain users';
+    else
+        $home_group = 'allusers';
+
 	$user_manager = User_Manager::create();
 	$users = $user_manager->get_list();
 
