@@ -1096,17 +1096,17 @@ class Samba extends Software
         if (! $ldap->is_directory_initialized())
             throw new Samba_Not_Initialized_Exception();
 
-        // Set the winadmin password
-        //--------------------------
-
-        $user = User_Factory::create(self::CONSTANT_WINADMIN_USERNAME);
-        $user->reset_password($password, $password, self::CONSTANT_WINADMIN_USERNAME);
-
         // Set the netbios name and workgroup
         //-----------------------------------
 
         $this->set_netbios_name($netbios);
         $this->set_workgroup($workgroup);
+
+        // Set the winadmin password
+        //--------------------------
+
+        $user = User_Factory::create(self::CONSTANT_WINADMIN_USERNAME);
+        $user->reset_password($password, $password, self::CONSTANT_WINADMIN_USERNAME);
 
         // Set default mode
         //-----------------
