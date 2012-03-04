@@ -535,7 +535,7 @@ class OpenLDAP_Driver extends Engine
         }
 
         $group_manager = new Group_Manager_Driver();
-        $group_details = $group_manager->get_details(Group_Driver::TYPE_ALL);
+        $group_details = $group_manager->get_details(Group_Driver::FILTER_ALL);
 
         // Add/Update the groups
         //----------------------
