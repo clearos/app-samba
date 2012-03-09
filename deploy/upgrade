@@ -31,10 +31,12 @@ if [ -n "$CHECK" ]; then
     mv /etc/samba/smb.conf.new /etc/samba/smb.conf
 fi
 
-# TODO: beta upgrade - remove after final 
-sed -i -e 's/^winbind separator = +/#winbind separator = +/' /etc/samba/smb.conf
-
 # Reload clearsyncd
 #------------------
 
-/sbin/service clearsyncd condrestart 2>/dev/null 2>&1
+/sbin/service clearsyncd condrestart >/dev/null 2>&1
+
+# API upgrade tasks
+#------------------
+
+/usr/clearos/apps/samba/deploy/upgradebeta >/dev/null 2>&1

@@ -1819,6 +1819,7 @@ class Samba extends Software
             $this->set_unix_password_sync_state(TRUE);
             $this->set_security(Samba::SECURITY_USER);
             $this->set_default_idmap_backend('ldap');
+            $this->set_winbind_separator('+');
             $this->_set_ldap_includes(TRUE);
         } else if ($mode == self::MODE_BDC) {
             $this->set_domain_logons(TRUE);
@@ -1830,6 +1831,7 @@ class Samba extends Software
             $this->set_unix_password_sync_state(FALSE);
             $this->set_security(Samba::SECURITY_USER);
             $this->set_default_idmap_backend('ldap');
+            $this->set_winbind_separator('+');
             $this->_set_ldap_includes(TRUE);
         } else if ($mode == self::MODE_SIMPLE_SERVER) {
             $this->set_domain_logons(TRUE);
@@ -1841,6 +1843,7 @@ class Samba extends Software
             $this->set_unix_password_sync_state(TRUE);
             $this->set_security(Samba::SECURITY_USER);
             $this->set_default_idmap_backend('ldap');
+            $this->set_winbind_separator('+');
             $this->_set_ldap_includes(TRUE);
         } else if ($mode == self::MODE_MEMBER) {
             $this->set_domain_logons(FALSE);
@@ -1852,6 +1855,7 @@ class Samba extends Software
             $this->set_unix_password_sync_state(FALSE);
             $this->set_security(Samba::SECURITY_ADS);
             $this->set_default_idmap_backend('tdb');
+            $this->set_winbind_separator('+');
             $this->_set_ldap_includes(FALSE);
         }
     }
