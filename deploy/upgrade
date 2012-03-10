@@ -40,3 +40,9 @@ fi
 #------------------
 
 /usr/clearos/apps/samba/deploy/upgradebeta >/dev/null 2>&1
+
+# Run events
+#-----------
+
+/usr/clearos/apps/samba/deploy/syncaction reconfigure
+/usr/clearos/apps/samba/deploy/syncaction restart

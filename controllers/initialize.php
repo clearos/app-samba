@@ -72,6 +72,8 @@ class Initialize extends ClearOS_Controller
         //---------------
 
         try {
+            // In some circumstances, Samba can auto-initialize.  Give it a try.
+            $this->samba->initialize();
             $is_initialized = $this->samba->is_local_system_initialized();
         } catch (Exception $e) {
             $this->page->view_exception($e);
@@ -82,7 +84,7 @@ class Initialize extends ClearOS_Controller
         //-----------
 
         if ($is_initialized) {
-            return;
+            redirect('/samba');
         } else {
             $this->edit();
         }

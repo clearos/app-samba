@@ -12,3 +12,14 @@ if [ -e /etc/samba/smb.conf ]; then
 fi
 
 cp /usr/clearos/apps/samba/deploy/smb.conf /etc/samba/smb.conf
+
+# Set server to start if applicable
+#----------------------------------
+
+if [ -e /var/clearos/samba/initialized_local ]; then
+    logger -p local6.notice -t installer "app-samba-core - setting server to start"
+    /sbin/chkconfig nmb on
+    /sbin/chkconfig smb on
+    /sbin/service nmb start
+    /sbin/service smb start
+fi

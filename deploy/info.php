@@ -44,6 +44,7 @@ $app['requires'] = array(
 );
 
 $app['core_requires'] = array(
+    'app-base-core >= 1:1.0.6',
     'app-network-core', 
     'app-openldap-directory-core', 
     'app-samba-extension-core',

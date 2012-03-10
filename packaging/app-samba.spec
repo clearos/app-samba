@@ -24,6 +24,7 @@ Summary: Windows Networking - APIs and install
 License: LGPLv3
 Group: ClearOS/Libraries
 Requires: app-base-core
+Requires: app-base-core >= 1:1.0.6
 Requires: app-network-core
 Requires: app-openldap-directory-core
 Requires: app-samba-extension-core

@@ -1,26 +1,42 @@
 #!/bin/sh
 
-# FIXME: add a quick test to see if this is necessary (?)
-[ -x /usr/sbin/samba-init ] && /usr/sbin/samba-init >/dev/null 2>&1
-[ -x /usr/sbin/add-windows-group-info ] && /usr/sbin/add-windows-group-info >/dev/null 2>&1
-[ -x /usr/sbin/samba-homes ] && /usr/sbin/samba-homes >/dev/null 2>&1
+# Reload Samba on a configuration change
+#---------------------------------------
 
-# TODO: overkill - needs to be called once
-[ -x /usr/sbin/password-policies-synchronize ] && /usr/sbin/password-policies-synchronize >/dev/null 2>&1
+if [ "$1" == "restart" ]; then
+    # FIXME: add a quick test to see if this is necessary (?)
+    [ -x /usr/sbin/samba-init ] && /usr/sbin/samba-init >/dev/null 2>&1
+    [ -x /usr/sbin/add-windows-group-info ] && /usr/sbin/add-windows-group-info >/dev/null 2>&1
+
+    # TODO: overkill - needs to be called once
+    [ -x /usr/sbin/password-policies-synchronize ] && /usr/sbin/password-policies-synchronize >/dev/null 2>&1
+
+    [ -x /etc/rc.d/init.d/winbind ] && /sbin/service winbind reload
+    [ -x /etc/rc.d/init.d/nmb ] && /sbin/service nmb reload
+    [ -x /etc/rc.d/init.d/smb ] && /sbin/service smb reload
 
 # Set interfaces parameter when network changes
 #----------------------------------------------
 
-[ -e /etc/init.d/functions-automagic ] && source /etc/init.d/functions-automagic
-[ -e /etc/sysconfig/automagic ] && source /etc/sysconfig/automagic
-[ -e /etc/sysconfig/samba ] && source /etc/sysconfig/samba
+elif [ "$1" == "reconfigure" ]; then
 
-# Bail if automagic is disabled
+    [ -e /etc/init.d/functions-automagic ] && source /etc/init.d/functions-automagic
+    [ -e /etc/sysconfig/automagic ] && source /etc/sysconfig/automagic
+    [ -e /etc/sysconfig/samba ] && source /etc/sysconfig/samba
 
-if [ "$AUTOMAGIC" == "off" ]; then
-        return
+    # Bail if automagic is disabled
+
+    if [ "$AUTOMAGIC" == "off" ]; then
+            return
+    fi
+
+    sed -i -e "s/^interfaces.*/interfaces = lo $AUTOMAGIC_LANIFS/" /etc/samba/smb.conf
+
+# Create home directories when accounts system is changed
+#--------------------------------------------------------
+
+elif [ "$1" == "accounts_sync" ]; then
+    [ -x /usr/sbin/samba-homes ] && /usr/sbin/samba-homes >/dev/null 2>&1
 fi
-
-sed -i -e "s/^interfaces.*/interfaces = lo $AUTOMAGIC_LANIFS/" /etc/samba/smb.conf
 
 exit 0
