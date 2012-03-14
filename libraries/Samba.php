@@ -60,6 +60,7 @@ use \clearos\apps\accounts\Accounts_Configuration as Accounts_Configuration;
 use \clearos\apps\base\File as File;
 use \clearos\apps\base\Shell as Shell;
 use \clearos\apps\base\Software as Software;
+use \clearos\apps\ldap\Nslcd as Nslcd;
 use \clearos\apps\mode\Mode_Engine as Mode_Engine;
 use \clearos\apps\mode\Mode_Factory as Mode_Factory;
 use \clearos\apps\network\Hostname as Hostname;
@@ -75,6 +76,7 @@ clearos_load_library('accounts/Accounts_Configuration');
 clearos_load_library('base/File');
 clearos_load_library('base/Shell');
 clearos_load_library('base/Software');
+clearos_load_library('ldap/Nslcd');
 clearos_load_library('mode/Mode_Engine');
 clearos_load_library('mode/Mode_Factory');
 clearos_load_library('network/Hostname');
@@ -1132,14 +1134,29 @@ class Samba extends Software
         $nmbd = new Nmbd();
         $smbd = new Smbd();
         $winbind = new Winbind();
+        $nslcd = new Nslcd();
 
+        // Do a hard reset on Nslcd (brutal)
+        if ($nslcd->is_installed()) {
+            if ($nslcd->get_running_state())
+                $nslcd->restart();
+            else
+                $nslcd->set_running_state(TRUE);
+        }
+
+        // Do a hard reset on Winbind
         if ($winbind->get_running_state())
             $winbind->restart();
         else
             $winbind->set_running_state(TRUE);
 
         $nmbd->set_running_state(TRUE);
-        $smbd->set_running_state(TRUE);
+
+        try {
+            $smbd->set_running_state(TRUE);
+        } catch (Exception $e) {
+            // Not the end of the world, can fail if LDAP is not quite ready
+        }
 
         $nmbd->set_boot_state(TRUE);
         $smbd->set_boot_state(TRUE);
@@ -1240,6 +1257,20 @@ class Samba extends Software
         } else if ($mode === Mode_Engine::MODE_SLAVE) {
             $this->initialize_slave_system();
         }
+
+        // Start winbind, man
+        //-------------------
+
+        try {
+            $winbind = new Winbind();
+            $winbind->set_boot_state(TRUE);
+            $winbind->set_running_state(TRUE);
+        } catch (Exception $e) {
+            // Not fatal
+        }
+
+        // And scene
+        //----------
 
         $this->_set_initialized();
     }
@@ -1362,12 +1393,21 @@ class Samba extends Software
         $nmbd = new Nmbd();
         $smbd = new Smbd();
         $winbind = new Winbind();
+        $nslcd = new Nslcd();
 
         $nmbd->set_boot_state(TRUE);
         $smbd->set_boot_state(TRUE);
         $winbind->set_boot_state(TRUE);
 
         try {
+            // Do a hard reset on Nslcd (brutal)
+            if ($nslcd->is_installed()) {
+                if ($nslcd->get_running_state())
+                    $nslcd->restart();
+                else
+                    $nslcd->set_running_state(TRUE);
+            }
+
             $nmbd->set_running_state(TRUE);
             $smbd->set_running_state(TRUE);
             if ($winbind->get_running_state())
@@ -2805,6 +2845,7 @@ class Samba extends Software
                 break;
             } catch (Engine_Exception $e) {
                 $net_error = clearos_exception_message($e);
+                clearos_log('samba', 'waiting for net rpc rights response');
             }
         }
 
@@ -2858,7 +2899,7 @@ class Samba extends Software
 
         $options['stdin'] = TRUE;
 
-        for ($inx = 1; $inx < 10; $inx++) {
+        for ($inx = 1; $inx < 20; $inx++) {
             try {
                 sleep(2);
                 $shell->execute(self::COMMAND_NET, 'rpc join -S ' .$netbios_name .
@@ -2867,10 +2908,11 @@ class Samba extends Software
                 break;
             } catch (Exception $e) {
                 // Try again
+                clearos_log('samba', 'waiting for net rpc join response');
             }
         }
 
-        // TODO: Not the end of the world.  Log it?
+        // TODO: Not the end of the world.
         // if (! $succeeded)
 
         if (! $smbd_wasrunning)

@@ -1,24 +1,40 @@
 #!/bin/sh
 
+set -e
+
 # Reload Samba on a configuration change
 #---------------------------------------
 
-if [ "$1" == "restart" ]; then
-    # FIXME: add a quick test to see if this is necessary (?)
-    [ -x /usr/sbin/samba-init ] && /usr/sbin/samba-init >/dev/null 2>&1
-    [ -x /usr/sbin/add-windows-group-info ] && /usr/sbin/add-windows-group-info >/dev/null 2>&1
+if [ "$1" == "configuration_change_event" ]; then
+    if [ -e /var/clearos/samba/initialized ]; then
+        logger -p local6.notice -t clearsync "samba - reloading daemons"
+        [ -x /etc/rc.d/init.d/winbind ] && /sbin/service winbind reload
+        [ -x /etc/rc.d/init.d/nmb ] && /sbin/service nmb reload
+        [ -x /etc/rc.d/init.d/smb ] && /sbin/service smb reload
+    fi
 
-    # TODO: overkill - needs to be called once
-    [ -x /usr/sbin/password-policies-synchronize ] && /usr/sbin/password-policies-synchronize >/dev/null 2>&1
+# Initialize directory when it is online
+#---------------------------------------
 
-    [ -x /etc/rc.d/init.d/winbind ] && /sbin/service winbind reload
-    [ -x /etc/rc.d/init.d/nmb ] && /sbin/service nmb reload
-    [ -x /etc/rc.d/init.d/smb ] && /sbin/service smb reload
+elif [ "$1" == "directory_online_event" ]; then
+    if ( [ ! -e /var/clearos/samba/initialized ] && [ -e /var/clearos/accounts/initialized ] ); then
+        logger -p local6.notice -t clearsync "samba - checking Samba directory initialization"
+        ( flock -x -n 200
+            logger -p local6.notice -t clearsync "samba - initializing Samba directory"
+            [ -x /usr/sbin/samba-init ] && /usr/sbin/samba-init >/dev/null 2>&1
+        ) 200>/var/tmp/samba-init
+    fi
+
+    # TODO: overkill - needs to be successful once
+    if [ -e /var/clearos/samba/initialized ]; then
+        [ -x /usr/sbin/add-windows-group-info ] && /usr/sbin/add-windows-group-info >/dev/null 2>&1
+        [ -x /usr/sbin/password-policies-synchronize ] && /usr/sbin/password-policies-synchronize >/dev/null 2>&1
+    fi
 
 # Set interfaces parameter when network changes
 #----------------------------------------------
 
-elif [ "$1" == "reconfigure" ]; then
+elif [ "$1" == "network_change_event" ]; then
 
     [ -e /etc/init.d/functions-automagic ] && source /etc/init.d/functions-automagic
     [ -e /etc/sysconfig/automagic ] && source /etc/sysconfig/automagic
@@ -27,15 +43,20 @@ elif [ "$1" == "reconfigure" ]; then
     # Bail if automagic is disabled
 
     if [ "$AUTOMAGIC" == "off" ]; then
-            return
+        return
     fi
 
-    sed -i -e "s/^interfaces.*/interfaces = lo $AUTOMAGIC_LANIFS/" /etc/samba/smb.conf
+    CHECK=`grep "^interfaces = lo $AUTOMAGIC_LANIFS" /etc/samba/smb.conf 2>/dev/null`
+    if [ -z "$CHECK" ]; then
+        logger -p local6.notice -t clearsync "samba - securing interfaces settings"
+        sed -i -e "s/^interfaces.*/interfaces = lo $AUTOMAGIC_LANIFS/" /etc/samba/smb.conf
+    fi
 
 # Create home directories when accounts system is changed
 #--------------------------------------------------------
 
-elif [ "$1" == "accounts_sync" ]; then
+elif [ "$1" == "account_change_event" ]; then
+    logger -p local6.notice -t clearsync "samba - checking home directories"
     [ -x /usr/sbin/samba-homes ] && /usr/sbin/samba-homes >/dev/null 2>&1
 fi
 

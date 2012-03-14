@@ -5,7 +5,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 $app['basename'] = 'samba';
-$app['version'] = '1.0.6';
+$app['version'] = '1.0.8';
 $app['release'] = '1';
 $app['vendor'] = 'ClearFoundation';
 $app['packager'] = 'ClearFoundation';
@@ -44,10 +44,12 @@ $app['requires'] = array(
 );
 
 $app['core_requires'] = array(
-    'app-base-core >= 1:1.0.6',
+    'app-accounts-core >= 1:1.0.7',
+    'app-groups-core >= 1:1.0.7',
+    'app-users-core >= 1:1.0.6',
     'app-network-core', 
-    'app-openldap-directory-core', 
-    'app-samba-extension-core',
+    'app-openldap-directory-core >= 1:1.0.7', 
+    'app-samba-extension-core >= 1:1.0.7',
     'csplugin-filewatch',
     'samba-client >= 3.6.1',
     'samba-winbind >= 3.6.1',
@@ -57,8 +59,9 @@ $app['core_requires'] = array(
 
 $app['core_file_manifest'] = array( 
     'filewatch-samba-accounts.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-accounts.conf'),
-    'filewatch-samba-network.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-network.conf'),
     'filewatch-samba-configuration.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-configuration.conf'),
+    'filewatch-samba-directory.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-directory.conf'),
+    'filewatch-samba-network.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-network.conf'),
     'smb.ldap.conf' => array( 'target' => '/var/clearos/ldap/synchronize/smb.ldap.conf' ),
     'smb.winbind.conf' => array( 'target' => '/var/clearos/ldap/synchronize/smb.winbind.conf' ),
     'add-samba-directories' => array(

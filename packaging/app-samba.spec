@@ -1,7 +1,7 @@
 
 Name: app-samba
 Epoch: 1
-Version: 1.0.6
+Version: 1.0.8
 Release: 1%{dist}
 Summary: Windows Networking
 License: GPLv3
@@ -24,10 +24,12 @@ Summary: Windows Networking - APIs and install
 License: LGPLv3
 Group: ClearOS/Libraries
 Requires: app-base-core
-Requires: app-base-core >= 1:1.0.6
+Requires: app-accounts-core >= 1:1.0.7
+Requires: app-groups-core >= 1:1.0.7
+Requires: app-users-core >= 1:1.0.6
 Requires: app-network-core
-Requires: app-openldap-directory-core
-Requires: app-samba-extension-core
+Requires: app-openldap-directory-core >= 1:1.0.7
+Requires: app-samba-extension-core >= 1:1.0.7
 Requires: csplugin-filewatch
 Requires: samba-client >= 3.6.1
 Requires: samba-winbind >= 3.6.1
@@ -53,6 +55,7 @@ install -D -m 0755 packaging/add-samba-directories %{buildroot}/usr/sbin/add-sam
 install -D -m 0755 packaging/add-windows-group-info %{buildroot}/usr/sbin/add-windows-group-info
 install -D -m 0644 packaging/filewatch-samba-accounts.conf %{buildroot}/etc/clearsync.d/filewatch-samba-accounts.conf
 install -D -m 0644 packaging/filewatch-samba-configuration.conf %{buildroot}/etc/clearsync.d/filewatch-samba-configuration.conf
+install -D -m 0644 packaging/filewatch-samba-directory.conf %{buildroot}/etc/clearsync.d/filewatch-samba-directory.conf
 install -D -m 0644 packaging/filewatch-samba-network.conf %{buildroot}/etc/clearsync.d/filewatch-samba-network.conf
 install -D -m 0644 packaging/nmb.php %{buildroot}/var/clearos/base/daemon/nmb.php
 install -D -m 0755 packaging/samba-add-machine %{buildroot}/usr/sbin/samba-add-machine
@@ -110,6 +113,7 @@ exit 0
 /usr/sbin/add-windows-group-info
 /etc/clearsync.d/filewatch-samba-accounts.conf
 /etc/clearsync.d/filewatch-samba-configuration.conf
+/etc/clearsync.d/filewatch-samba-directory.conf
 /etc/clearsync.d/filewatch-samba-network.conf
 /var/clearos/base/daemon/nmb.php
 /usr/sbin/samba-add-machine

@@ -120,7 +120,7 @@ class OpenLDAP_Driver extends Engine
     // C O N S T A N T S
     ///////////////////////////////////////////////////////////////////////////////
 
-    const FILE_INITIALIZED = '/var/clearos/samba/initialized';
+    const FILE_INITIALIZED = '/var/clearos/samba/initialized_directory';
     const CACHE_FLAG_TIME = 60; // in seconds
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -173,12 +173,16 @@ class OpenLDAP_Driver extends Engine
         if ($this->ldaph == NULL)
             $this->_get_ldap_handle();
 
+        $samba = new Samba();
+        $domain_sid = $samba->get_domain_sid();
+
         $accounts = new Accounts_Driver();
 
         $ldap_object['objectClass'] = array(
             'top',
             'account',
             'posixAccount',
+            'sambaSamAccount'
         );
 
         $ldap_object['cn'] = $name;
@@ -188,6 +192,7 @@ class OpenLDAP_Driver extends Engine
         $ldap_object['gidNumber'] = Samba::CONSTANT_GID_DOMAIN_COMPUTERS;
         $ldap_object['homeDirectory'] = '/dev/null';
         $ldap_object['loginShell'] = '/sbin/nologin';
+        $ldap_object['sambaSID'] = $domain_sid . '-' . $ldap_object['uidNumber'] ;
 
         $dn = 'cn=' . $this->ldaph->dn_escape($name) . ',' . OpenLDAP::get_computers_container();
 
@@ -453,6 +458,12 @@ class OpenLDAP_Driver extends Engine
         } catch (Engine_Exception $e) {
             // Not fatal
         }
+
+        // Flag to indicate directory has been initialized
+        $file = new File(self::FILE_INITIALIZED);
+
+        if (! $file->exists())
+            $file->create('root', 'root', '0644');
     }
 
     /**
@@ -466,47 +477,12 @@ class OpenLDAP_Driver extends Engine
     {
         clearos_profile(__METHOD__, __LINE__);
 
-        // To speed things up on multiple requests (read: user import)
-        // user a cache file instead of an expensive LDAP read.
-        //------------------------------------------------------------
-
-        clearstatcache();
-
         $file = new File(self::FILE_INITIALIZED);
 
-        if ($file->exists()) {
-            $stat = stat(self::FILE_INITIALIZED);
-            $cache_time = time() - $stat['ctime'];
-
-            if ($cache_time < self::CACHE_FLAG_TIME)
-                return TRUE;
-
-            $file->delete();
-        }
-
-        // Read LDAP if file does not exist
-        //---------------------------------
-
-        if ($this->ldaph === NULL)
-            $this->_get_ldap_handle();
-
-        $result = $this->ldaph->search(
-            '(objectclass=sambaDomain)',
-            OpenLDAP::get_base_dn(),
-            array('sambaDomainName', 'sambaSID')
-        );
-
-        $entry = $this->ldaph->get_first_entry($result);
-
-        if ($entry) {
-            if ($file->exists())
-                $file->delete();
-
-            $file->create('root', 'root', '0644');
+        if ($file->exists())
             return TRUE;
-        } else {
+        else
             return FALSE;
-        }
     }
 
     /**
@@ -540,19 +516,12 @@ class OpenLDAP_Driver extends Engine
         // Add/Update the groups
         //----------------------
 
-        $attributes['objectClass'] = array(
-            'top',
-            'posixGroup',
-            'groupOfNames',
-            'sambaGroupMapping'
-        );
-
         foreach ($group_details as $group_name => $group_info) {
 
             // Skip system (non-LDAP) groups
             //------------------------------
 
-            if ($group_info['type'] === Group_Driver::TYPE_SYSTEM)
+            if ($group_info['core']['type'] === Group_Driver::TYPE_SYSTEM)
                 continue;
 
             // Skip groups with existing Samba attributes
@@ -564,14 +533,13 @@ class OpenLDAP_Driver extends Engine
             // Update group
             //-------------
 
-            // TODO: push this to Group_Driver->update();
-            $dn = "cn=" . $this->ldaph->dn_escape($group_info['group_name']) . "," . OpenLDAP::get_groups_container();
-            $attributes['sambaSID'] = $domain_sid . '-' . $group_info['gid_number'];
-            $attributes['sambaGroupType'] = 2;
-            $attributes['displayName'] = $group_info['group_name'];
+            $group = new Group_Driver($group_name);
 
-            if ($this->ldaph->exists($dn))
-                $this->ldaph->modify($dn, $attributes);
+            $new_group_info['extensions']['samba']['sid'] = $domain_sid . '-' . $group_info['core']['gid_number'];
+            $new_group_info['extensions']['samba']['group_type'] = 2;
+            $new_group_info['extensions']['samba']['display_name'] = $group_info['core']['group_name'];
+
+            $group->update($new_group_info);
         }
     }
 
@@ -1017,7 +985,7 @@ class OpenLDAP_Driver extends Engine
             $user_manager = new User_Manager_Driver();
             $all_users = $user_manager->get_list();
 
-            $group = new Group_Driver("domain_users");
+            $group = new Group_Driver('domain_users');
             $group->set_members($all_users);
         } catch (Exception $e) {
             // TODO: make this fatal
@@ -1046,12 +1014,6 @@ class OpenLDAP_Driver extends Engine
             $domainsid = $samba->get_domain_sid();
         }
 
-        $users_container = OpenLDAP::get_users_container();
-        $groups_container = OpenLDAP::get_groups_container();
-
-        $guest_dn = 'cn=' . Samba::CONSTANT_GUEST_CN . ',' . $users_container;
-        $winadmin_dn = 'cn=' . Samba::CONSTANT_WINADMIN_CN . ',' . $users_container;
-
         ///////////////////////////////////////////////////////////////////////////////
         // D O M A I N   G R O U P S
         ///////////////////////////////////////////////////////////////////////////////
@@ -1064,131 +1026,132 @@ class OpenLDAP_Driver extends Engine
 
         $groups = array();
 
-        $dn = 'cn=domain_admins,' . $groups_container;
-        $groups[$dn]['displayName'] = 'Domain Admins';
-        $groups[$dn]['description'] = 'Domain Admins';
-        $groups[$dn]['gidNumber'] = '1000512';
-        $groups[$dn]['sambaSID'] = $domainsid . '-512';
-        $groups[$dn]['sambaGroupType'] = 2;
-        $groups[$dn]['member'] = array($winadmin_dn);
+        $group = 'domain_admins';
+        $groups[$group]['core']['description'] = 'Domain Admins';
+        $groups[$group]['core']['gid_number'] = '1000512';
+        $groups[$group]['extensions']['samba']['sid'] = $domainsid . '-512';
+        $groups[$group]['extensions']['samba']['group_type'] = 2;
+        $groups[$group]['extensions']['samba']['display_name'] = 'Domain Admins';
+        $groups[$group]['extensions']['mail']['distribution_list'] = 0;
+        $groups[$group]['members'] = array(Samba::CONSTANT_WINADMIN_CN);
 
-        $dn = 'cn=domain_users,' . $groups_container;
-        $groups[$dn]['displayName'] = 'Domain Users';
-        $groups[$dn]['description'] = 'Domain Users';
-        $groups[$dn]['gidNumber'] = '1000513';
-        $groups[$dn]['sambaSID'] = $domainsid . '-513';
-        $groups[$dn]['sambaGroupType'] = 2;
+        $group = 'domain_users';
+        $groups[$group]['core']['description'] = 'Domain Users';
+        $groups[$group]['core']['gid_number'] = '1000513';
+        $groups[$group]['extensions']['samba']['sid'] = $domainsid . '-513';
+        $groups[$group]['extensions']['samba']['group_type'] = 2;
+        $groups[$group]['extensions']['samba']['display_name'] = 'Domain Users';
+        $groups[$group]['extensions']['mail']['distribution_list'] = 0;
 
-        $dn = 'cn=domain_guests,' . $groups_container;
-        $groups[$dn]['displayName'] = 'Domain Guests';
-        $groups[$dn]['description'] = 'Domain Guests';
-        $groups[$dn]['gidNumber'] = '1000514';
-        $groups[$dn]['sambaSID'] = $domainsid . '-514';
-        $groups[$dn]['sambaGroupType'] = 2;
-        $groups[$dn]['member'] = array($guest_dn);
+        $group = 'domain_guests';
+        $groups[$group]['core']['description'] = 'Domain Guests';
+        $groups[$group]['core']['gid_number'] = '1000514';
+        $groups[$group]['extensions']['samba']['sid'] = $domainsid . '-514';
+        $groups[$group]['extensions']['samba']['group_type'] = 2;
+        $groups[$group]['extensions']['mail']['distribution_list'] = 0;
+        $groups[$group]['extensions']['samba']['display_name'] = 'Domain Guests';
+        $groups[$group]['members'] = array(Samba::CONSTANT_GUEST_CN);
 
-        $dn = 'cn=domain_computers,' . $groups_container;
-        $groups[$dn]['displayName'] = 'Domain Computers';
-        $groups[$dn]['description'] = 'Domain Computers';
-        $groups[$dn]['gidNumber'] = Samba::CONSTANT_GID_DOMAIN_COMPUTERS;
-        $groups[$dn]['sambaSID'] = $domainsid . '-515';
-        $groups[$dn]['sambaGroupType'] = 2;
+        $group = 'domain_computers';
+        $groups[$group]['core']['description'] = 'Domain Computers';
+        $groups[$group]['core']['gid_number'] = Samba::CONSTANT_GID_DOMAIN_COMPUTERS;
+        $groups[$group]['extensions']['samba']['sid'] = $domainsid . '-515';
+        $groups[$group]['extensions']['samba']['group_type'] = 2;
+        $groups[$group]['extensions']['samba']['display_name'] = 'Domain Computers';
+        $groups[$group]['extensions']['mail']['distribution_list'] = 0;
 
         /*
-        $dn = 'cn=domain_controllers,' . $groups_container;
-        $groups[$dn]['displayName'] = 'Domain Controllers';
-        $groups[$dn]['description'] = 'Domain Controllers';
-        $groups[$dn]['gidNumber'] = '1000516';
-        $groups[$dn]['sambaSID'] = $domainsid . '-516';
-        $groups[$dn]['sambaGroupType'] = 2;
+        $group = 'domain_controllers';
+        $groups[$group]['core']['description'] = 'Domain Controllers';
+        $groups[$group]['core']['gid_number'] = '1000516';
+        $groups[$group]['extensions']['samba']['sid'] = $domainsid . '-516';
+        $groups[$group]['extensions']['samba']['display_name'] = 'Domain Controllers';
+        $groups[$group]['extensions']['samba']['group_type'] = 2;
+        $groups[$group]['extensions']['mail']['distribution_list'] = 0;
         */
 
         ///////////////////////////////////////////////////////////////////////////////
         // B U I L T - I N   G R O U P S
         ///////////////////////////////////////////////////////////////////////////////
 
-        $dn = 'cn=administrators,' . $groups_container;
-        $groups[$dn]['displayName'] = 'Administrators';
-        $groups[$dn]['description'] = 'Administrators';
-        $groups[$dn]['gidNumber'] = '1000544';
-        $groups[$dn]['sambaSID'] = 'S-1-5-32-544';
-        $groups[$dn]['SambaSIDList'] = $domainsid . '-512';
-        $groups[$dn]['sambaGroupType'] = 4;
+        $group = 'administrators';
+        $groups[$group]['core']['description'] = 'Administrators';
+        $groups[$group]['core']['gid_number'] = '1000544';
+        $groups[$group]['extensions']['samba']['sid'] = 'S-1-5-32-544';
+        $groups[$group]['extensions']['samba']['sid_list'] = $domainsid . '-512';
+        $groups[$group]['extensions']['samba']['group_type'] = 4;
+        $groups[$group]['extensions']['samba']['display_name'] = 'Administrators';
+        $groups[$group]['extensions']['mail']['distribution_list'] = 0;
 
-        $dn = 'cn=users,' . $groups_container;
-        $groups[$dn]['displayName'] = 'Users';
-        $groups[$dn]['description'] = 'Users';
-        $groups[$dn]['gidNumber'] = '1000545';
-        $groups[$dn]['sambaSID'] = 'S-1-5-32-545';
-        $groups[$dn]['sambaGroupType'] = 4;
+        $group = 'users';
+        $groups[$group]['core']['description'] = 'Users';
+        $groups[$group]['core']['gid_number'] = '1000545';
+        $groups[$group]['extensions']['samba']['sid'] = 'S-1-5-32-545';
+        $groups[$group]['extensions']['samba']['group_type'] = 4;
+        $groups[$group]['extensions']['samba']['display_name'] = 'Users';
+        $groups[$group]['extensions']['mail']['distribution_list'] = 0;
 
-        $dn = 'cn=guests,' . $groups_container;
-        $groups[$dn]['displayName'] = 'Guests';
-        $groups[$dn]['description'] = 'Guests';
-        $groups[$dn]['gidNumber'] = '1000546';
-        $groups[$dn]['sambaSID'] = 'S-1-5-32-546';
-        $groups[$dn]['sambaGroupType'] = 4;
+        $group = 'guests';
+        $groups[$group]['core']['description'] = 'Guests';
+        $groups[$group]['core']['gid_number'] = '1000546';
+        $groups[$group]['extensions']['samba']['sid'] = 'S-1-5-32-546';
+        $groups[$group]['extensions']['samba']['group_type'] = 4;
+        $groups[$group]['extensions']['samba']['display_name'] = 'Guests';
+        $groups[$group]['extensions']['mail']['distribution_list'] = 0;
 
-        $dn = 'cn=power_users,' . $groups_container;
-        $groups[$dn]['displayName'] = 'Power Users';
-        $groups[$dn]['description'] = 'Power Users';
-        $groups[$dn]['gidNumber'] = '1000547';
-        $groups[$dn]['sambaSID'] = 'S-1-5-32-547';
-        $groups[$dn]['sambaGroupType'] = 4;
+        $group = 'power_users';
+        $groups[$group]['core']['description'] = 'Power Users';
+        $groups[$group]['core']['gid_number'] = '1000547';
+        $groups[$group]['extensions']['samba']['sid'] = 'S-1-5-32-547';
+        $groups[$group]['extensions']['samba']['group_type'] = 4;
+        $groups[$group]['extensions']['samba']['display_name'] = 'Power Users';
+        $groups[$group]['extensions']['mail']['distribution_list'] = 0;
 
-        $dn = 'cn=account_operators,' . $groups_container;
-        $groups[$dn]['displayName'] = 'Account Operators';
-        $groups[$dn]['description'] = 'Account Operators';
-        $groups[$dn]['gidNumber'] = '1000548';
-        $groups[$dn]['sambaSID'] = 'S-1-5-32-548';
-        $groups[$dn]['sambaGroupType'] = 4;
+        $group = 'account_operators';
+        $groups[$group]['core']['description'] = 'Account Operators';
+        $groups[$group]['core']['gid_number'] = '1000548';
+        $groups[$group]['extensions']['samba']['sid'] = 'S-1-5-32-548';
+        $groups[$group]['extensions']['samba']['group_type'] = 4;
+        $groups[$group]['extensions']['samba']['display_name'] = 'Account Operators';
+        $groups[$group]['extensions']['mail']['distribution_list'] = 0;
 
-        $dn = 'cn=server_operators,' . $groups_container;
-        $groups[$dn]['displayName'] = 'Server Operators';
-        $groups[$dn]['description'] = 'Server Operators';
-        $groups[$dn]['gidNumber'] = '1000549';
-        $groups[$dn]['sambaSID'] = 'S-1-5-32-549';
-        $groups[$dn]['sambaGroupType'] = 4;
+        $group = 'server_operators';
+        $groups[$group]['core']['description'] = 'Server Operators';
+        $groups[$group]['core']['gid_number'] = '1000549';
+        $groups[$group]['extensions']['samba']['sid'] = 'S-1-5-32-549';
+        $groups[$group]['extensions']['samba']['group_type'] = 4;
+        $groups[$group]['extensions']['samba']['display_name'] = 'Server Operators';
+        $groups[$group]['extensions']['mail']['distribution_list'] = 0;
 
-        $dn = 'cn=print_operators,' . $groups_container;
-        $groups[$dn]['displayName'] = 'Print Operators';
-        $groups[$dn]['description'] = 'Print Operators';
-        $groups[$dn]['gidNumber'] = '1000550';
-        $groups[$dn]['sambaSID'] = 'S-1-5-32-550';
-        $groups[$dn]['sambaGroupType'] = 4;
+        $group = 'print_operators';
+        $groups[$group]['core']['description'] = 'Print Operators';
+        $groups[$group]['core']['gid_number'] = '1000550';
+        $groups[$group]['extensions']['samba']['sid'] = 'S-1-5-32-550';
+        $groups[$group]['extensions']['samba']['group_type'] = 4;
+        $groups[$group]['extensions']['samba']['display_name'] = 'Print Operators';
+        $groups[$group]['extensions']['mail']['distribution_list'] = 0;
 
-        $dn = 'cn=backup_operators,' . $groups_container;
-        $groups[$dn]['displayName'] = 'Backup Operators';
-        $groups[$dn]['description'] = 'Backup Operators';
-        $groups[$dn]['gidNumber'] = '1000551';
-        $groups[$dn]['sambaSID'] = 'S-1-5-32-551';
-        $groups[$dn]['sambaGroupType'] = 4;
+        $group = 'backup_operators';
+        $groups[$group]['core']['description'] = 'Backup Operators';
+        $groups[$group]['core']['gid_number'] = '1000551';
+        $groups[$group]['extensions']['samba']['sid'] = 'S-1-5-32-551';
+        $groups[$group]['extensions']['samba']['group_type'] = 4;
+        $groups[$group]['extensions']['samba']['display_name'] = 'Backup Operators';
+        $groups[$group]['extensions']['mail']['distribution_list'] = 0;
 
         // Add/Update the groups
         //--------------------------------------------------------
 
-        $group_objectclasses['objectClass'] = array(
-            'top',
-            'posixGroup',
-            'groupOfNames',
-            'sambaGroupMapping'
-        );
+        foreach ($groups as $group_name => $group_info) {
+            $group = new Group_Driver($group_name);
 
-        foreach ($groups as $dn => $object) {
-            try {
-                if (! $this->ldaph->exists($dn)) {
-                    $matches = array();
-                    $groupname = preg_match("/^cn=([^,]*),/", $dn, $matches);
+            if ($group->exists())
+                $group->update($group_info);
+            else
+                $group->add($group_info);
 
-                    $group = new Group_Driver($matches[1]);
-                    $group->add($object['description']);
-                }
-
-                $this->ldaph->modify($dn, array_merge($group_objectclasses, $object));
-            } catch (Exception $e) {
-                // TODO: should check the existence of these groups and handle accordingly
-                // throw new Engine_Exception($e->GetMessage(), COMMON_ERROR);
-            }
+            if (isset($group_info['members']))
+                $group->set_members($group_info['members']);
         }
     }
 }
