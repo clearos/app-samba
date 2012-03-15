@@ -135,7 +135,9 @@ class Samba extends Software
     const FILE_DOMAIN_SID = '/etc/samba/domainsid';
     const FILE_LOCAL_SID = '/etc/samba/localsid';
     const FILE_INITIALIZED = '/var/clearos/samba/initialized';
+    const FILE_INITIALIZING = '/var/clearos/samba/lock/initializing';
     const FILE_LOCAL_SYSTEM_INITIALIZED = '/var/clearos/samba/initialized_local';
+    const FILE_LOCAL_INITIALIZING = '/var/clearos/samba/lock/initializing_local';
     const FILE_DOMAIN_SID_CACHE = '/var/clearos/samba/domain_sid_cache';
     const PATH_STATE = '/var/lib/samba';
     const PATH_STATE_BACKUP = '/var/clearos/samba/backup';
@@ -177,6 +179,7 @@ class Samba extends Software
     const CONSTANT_WINADMIN_CN = 'Windows Administrator';
     const CONSTANT_WINADMIN_USERNAME = 'winadmin';
     const CONSTANT_GUEST_CN = 'Guest Account';
+    const CONSTANT_GUEST_USERNAME = 'guest';
     const CONSTANT_GID_DOMAIN_COMPUTERS = '1000515';
     const CONSTANT_DOMAIN_SID_CACHE_TIME = 120;
 
@@ -1098,14 +1101,22 @@ class Samba extends Software
         if (! $ldap->is_directory_initialized())
             throw new Samba_Not_Initialized_Exception();
 
-        // Set the netbios name and workgroup
-        //-----------------------------------
+        clearos_log('samba', 'initializing local Samba system');
 
-        $this->set_netbios_name($netbios);
-        $this->set_workgroup($workgroup);
+        // Lock state file
+        //----------------
+
+        $initalizing_lock = fopen(self::FILE_LOCAL_INITIALIZING, 'w');
+
+        if (!flock($initalizing_lock, LOCK_EX | LOCK_NB)) {
+            clearos_log('samba', 'local initialization is already running');
+            return;
+        }
 
         // Set the winadmin password
         //--------------------------
+
+        clearos_log('samba', 'setting winadmin password');
 
         $user = User_Factory::create(self::CONSTANT_WINADMIN_USERNAME);
         $user->reset_password($password, $password, self::CONSTANT_WINADMIN_USERNAME);
@@ -1116,13 +1127,23 @@ class Samba extends Software
         $sysmode = Mode_Factory::create();
         $mode = $sysmode->get_mode();
 
-        if (($mode === Mode_Engine::MODE_MASTER) || ($mode === Mode_Engine::MODE_STANDALONE))
+        clearos_log('samba', "setting netbios name and workgroup: $netbios - $workgroup");
+
+        $this->set_netbios_name($netbios);
+        $this->set_workgroup($workgroup);
+
+        if (($mode === Mode_Engine::MODE_MASTER) || ($mode === Mode_Engine::MODE_STANDALONE)) {
+            clearos_log('samba', 'setting mode to PDC');
             $this->set_mode(Samba::MODE_PDC);
-        else if ($mode === Mode_Engine::MODE_SLAVE)
+        } else if ($mode === Mode_Engine::MODE_SLAVE) {
+            clearos_log('samba', 'setting mode to BDC');
             $this->set_mode(Samba::MODE_BDC);
+        }
 
         // Save the LDAP an Idmap passwords
         //---------------------------------
+
+        clearos_log('samba', 'storing LDAP credentials');
 
         $this->_save_bind_password();
         $this->_save_idmap_password();
@@ -1130,6 +1151,8 @@ class Samba extends Software
         // Net calls for privs an joining system to domain
         // Note: Samba needs to be running for the next steps
         //---------------------------------------------------
+
+        clearos_log('samba', 'starting Samba services for net calls');
 
         $nmbd = new Nmbd();
         $smbd = new Smbd();
@@ -1165,10 +1188,14 @@ class Samba extends Software
         // If PDC, join the local system to itself
         //----------------------------------------
 
+        clearos_log('samba', 'joining system to the domain');
+
         $this->_net_rpc_join($password);
 
         // Grant default privileges to winadmin et al
         //-------------------------------------------
+
+        clearos_log('samba', 'granting privileges for domain_users');
 
         $this->_net_grant_default_privileges($password);
 
@@ -1180,7 +1207,20 @@ class Samba extends Software
         // Set the local system initialized flag
         //--------------------------------------
 
+        clearos_log('samba', 'finished local initialization');
+
         $this->set_local_system_initialized(TRUE);
+
+        // Cleanup file / file lock
+        //-------------------------
+
+        flock($initalizing_lock, LOCK_UN);
+        fclose($initalizing_lock);
+
+        $file = new File($initalizing_lock);
+
+        if ($file->exists())
+            $file->delete();
     }
 
     /**
@@ -1232,6 +1272,16 @@ class Samba extends Software
         if ($this->is_initialized() && !$force)
             return;
 
+        // Lock state file
+        //----------------
+
+        $initalizing_lock = fopen(self::FILE_INITIALIZING, 'w');
+
+        if (!flock($initalizing_lock, LOCK_EX | LOCK_NB)) {
+            clearos_log('samba', 'initialization is already running');
+            return;
+        }
+
         // Bail if driver not set
         //-----------------------
 
@@ -1258,10 +1308,20 @@ class Samba extends Software
             $this->initialize_slave_system();
         }
 
+        // Delete SID cache
+        //-----------------
+
+        $file = new File(self::FILE_DOMAIN_SID_CACHE);
+
+        if ($file->exists())
+            $file->delete();
+
         // Start winbind, man
         //-------------------
 
         try {
+            clearos_log('samba', 'starting winbind');
+
             $winbind = new Winbind();
             $winbind->set_boot_state(TRUE);
             $winbind->set_running_state(TRUE);
@@ -1272,7 +1332,19 @@ class Samba extends Software
         // And scene
         //----------
 
+        clearos_log('samba', 'finished initialization... whew');
         $this->_set_initialized();
+
+        // Cleanup file / file lock
+        //-------------------------
+
+        flock($initalizing_lock, LOCK_UN);
+        fclose($initalizing_lock);
+
+        $file = new File($initalizing_lock);
+
+        if ($file->exists())
+            $file->delete();
     }
 
     /**
@@ -1286,8 +1358,12 @@ class Samba extends Software
     {
         clearos_profile(__METHOD__, __LINE__);
 
+        clearos_log('samba', 'initializing AD mode');
+
         // Start SMB and NMB
         //------------------
+
+        clearos_log('samba', 'starting smb and nmb');
 
         $nmbd = new Nmbd();
         $smbd = new Smbd();
@@ -1333,6 +1409,8 @@ class Samba extends Software
         // Initialize the LDAP components
         //-------------------------------
 
+        clearos_log('samba', 'initializing master/standalone LDAP');
+
         $ldap = new OpenLDAP_Driver();
         $ldap->initialize_master_system($domain, $password, $force);
 
@@ -1367,6 +1445,8 @@ class Samba extends Software
         if (! $ldap->is_directory_initialized())
             throw new Samba_Not_Initialized_Exception();
 
+        clearos_log('samba', 'initializing slave mode');
+
         // Bail if we are not a slave system
         //----------------------------------
 
@@ -1379,6 +1459,8 @@ class Samba extends Software
         // Set BDC defaults
         //-----------------
 
+        clearos_log('samba', 'configuring smb.conf');
+
         $ldap = new OpenLDAP_Driver();
         $workgroup = $ldap->get_domain();
 
@@ -1390,6 +1472,7 @@ class Samba extends Software
         $this->set_wins_server_and_support($master, FALSE);
         $this->_update_secrets($password);
 
+        clearos_log('samba', 'starting up Samba services');
         $nmbd = new Nmbd();
         $smbd = new Smbd();
         $winbind = new Winbind();
@@ -1421,6 +1504,8 @@ class Samba extends Software
         // Join system to domain
         //----------------------
 
+        clearos_log('samba', 'joining system to the domain');
+
         $this->_net_rpc_join($password, $master);
     }
 
@@ -1444,11 +1529,9 @@ class Samba extends Software
     }
 
     /**
-     * Check routine for identifying special shares.
+     * Check routine initialization.
      *
-     * @param string $name special share name name
-     *
-     * @return boolean TRUE if share name is special
+     * @return boolean TRUE if Samba has been initialized
      */
 
     public function is_initialized()
@@ -1456,6 +1539,24 @@ class Samba extends Software
         clearos_profile(__METHOD__, __LINE__);
 
         $file = new File(self::FILE_INITIALIZED);
+
+        if ($file->exists())
+            return TRUE;
+        else
+            return FALSE;
+    }
+
+    /**
+     * Check routine initialization process.
+     *
+     * @return boolean TRUE if Samba is in the middle of initializing
+     */
+
+    public function is_initializing()
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        $file = new File(self::FILE_INITIALIZING);
 
         if ($file->exists())
             return TRUE;
@@ -1587,7 +1688,7 @@ class Samba extends Software
         $user = User_Factory::create(self::CONSTANT_WINADMIN_USERNAME);
         $user->reset_password($password, $password, self::CONSTANT_WINADMIN_USERNAME);
 
-        // Rejoin for good measure (hard time getting net rpc join to run consistentl)
+        // Rejoin for good measure (hard time getting net rpc join to run consistently)
         if ($this->get_mode() === self::MODE_PDC) {
             $ldap = new OpenLDAP_Driver();
             $ldap->add_computer($this->get_netbios_name());
@@ -2319,7 +2420,6 @@ class Samba extends Software
      * or directory (e.g. /var/samba/drivers owned by domain_users).  This method 
      * cleans up this issue.
      *
-     *
      * @return void
      * @throws Engine_Exception, Samba_Not_Initialized_Exception
      */
@@ -2899,7 +2999,7 @@ class Samba extends Software
 
         $options['stdin'] = TRUE;
 
-        for ($inx = 1; $inx < 20; $inx++) {
+        for ($inx = 1; $inx < 15; $inx++) {
             try {
                 sleep(2);
                 $shell->execute(self::COMMAND_NET, 'rpc join -S ' .$netbios_name .

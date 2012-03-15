@@ -90,6 +90,11 @@ $app['core_file_manifest'] = array(
 );
 
 $app['core_directory_manifest'] = array(
-   '/var/clearos/samba' => array(),
-   '/var/clearos/samba/backup' => array(),
+    '/var/clearos/samba' => array(),
+    '/var/clearos/samba/backup' => array(),
+    '/var/clearos/samba/lock' => array(
+        'mode' => '0775',
+        'owner' => 'root',
+        'group' => 'webconfig',
+    ),
 );

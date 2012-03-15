@@ -2,6 +2,27 @@
 
 set -e
 
+# Check initialization - we don't want to stomp on that process
+#--------------------------------------------------------------
+
+if [ -e /var/clearos/samba/lock/initializing ]; then
+    if [ -e /var/clearos/samba/initialized ]; then
+        rm -f /var/clearos/samba/lock/initializing
+    else
+        logger -p local6.notice -t clearsync "samba - skipping event, initialization in progress"
+        exit 0
+    fi
+fi
+
+if [ -e /var/clearos/samba/lock/initializing_local ]; then
+    if [ -e /var/clearos/samba/initialized_local ]; then
+        rm -f /var/clearos/samba/lock/initializing_local
+    else
+        logger -p local6.notice -t clearsync "samba - skipping event, local initialization in progress"
+        exit 0
+    fi
+fi
+
 # Reload Samba on a configuration change
 #---------------------------------------
 

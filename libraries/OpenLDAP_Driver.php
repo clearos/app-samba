@@ -386,7 +386,6 @@ class OpenLDAP_Driver extends Engine
             return;
 
         // Shutdown Samba daemons if they are installed/running
-
         $samba = new Samba(); 
         $nmbd = new Nmbd();
         $smbd = new Smbd();
@@ -396,28 +395,36 @@ class OpenLDAP_Driver extends Engine
         $smbd_was_running = FALSE;
         $winbind_was_running = FALSE;
 
-        if ($winbind->is_installed()) {
-            $winbind_was_running = $winbind->get_running_state();
-            if ($winbind_was_running)
-                $winbind->set_running_state(FALSE);
-        }
-
         if ($smbd->is_installed()) {
             $smbd_was_running = $smbd->get_running_state();
-            if ($smbd_was_running)
+            if ($smbd_was_running) {
+                clearos_log('samba', 'stopping smb during initialization');
                 $smbd->set_running_state(FALSE);
+            }
         }
 
         if ($nmbd->is_installed()) {
             $nmbd_was_running = $nmbd->get_running_state();
-            if ($nmbd_was_running)
+            if ($nmbd_was_running) {
+                clearos_log('samba', 'stopping nmb during initialization');
                 $nmbd->set_running_state(FALSE);
+            }
+        }
+
+        if ($winbind->is_installed()) {
+            $winbind_was_running = $winbind->get_running_state();
+            if ($winbind_was_running) {
+                clearos_log('samba', 'stopping winbind during initialization');
+                $winbind->set_running_state(FALSE);
+            }
         }
 
         // Archive the files (usually in /var/lib/samba)
+        clearos_log('samba', 'archiving old state files');
         $this->_archive_state_files();
 
         // Set Samba
+        clearos_log('samba', 'configuring smb.conf');
         $samba->set_mode(Samba::MODE_PDC);
         $samba->set_workgroup($domain);
         $samba->set_password_servers(array());
@@ -426,6 +433,7 @@ class OpenLDAP_Driver extends Engine
         $samba->set_default_idmap_backend('ldap');
 
         // Bootstrap the domain SID
+        clearos_log('samba', 'initializing SIDs');
         $domainsid = $this->_initialize_domain_sid();
 
         // Set local SID to be the same as domain SID
@@ -440,6 +448,7 @@ class OpenLDAP_Driver extends Engine
         $this->update_group_mappings($domainsid);
 
         // Save the LDAP password into secrets
+        clearos_log('samba', 'storing LDAP credentials');
         $samba->_save_bind_password();
 
         // Restart Samba if it was running 
@@ -460,6 +469,7 @@ class OpenLDAP_Driver extends Engine
         }
 
         // Flag to indicate directory has been initialized
+        clearos_log('samba', 'finished directory initialization');
         $file = new File(self::FILE_INITIALIZED);
 
         if (! $file->exists())
@@ -535,6 +545,7 @@ class OpenLDAP_Driver extends Engine
 
             $group = new Group_Driver($group_name);
 
+            clearos_log('samba', "adding samba mappings to group $group_name");
             $new_group_info['extensions']['samba']['sid'] = $domain_sid . '-' . $group_info['core']['gid_number'];
             $new_group_info['extensions']['samba']['group_type'] = 2;
             $new_group_info['extensions']['samba']['display_name'] = $group_info['core']['group_name'];
@@ -842,8 +853,6 @@ class OpenLDAP_Driver extends Engine
         if ($this->ldaph === NULL)
             $this->_get_ldap_handle();
 
-        // TODO: validate
-
         $samba = new Samba();
 
         $domain = $samba->get_workgroup();
@@ -882,8 +891,10 @@ class OpenLDAP_Driver extends Engine
         $domainobj['sambaForceLogoff'] = 0;
         $domainobj['sambaRefuseMachinePwdChange'] = 0;
 
-        if (! $this->ldaph->exists($dn))
+        if (! $this->ldaph->exists($dn)) {
+            clearos_log('samba', 'adding sambaDomainName LDAP attribute');
             $this->ldaph->add($dn, $domainobj);
+        }
 
         // Idmap
         //--------------------------------------------------------
@@ -895,8 +906,10 @@ class OpenLDAP_Driver extends Engine
         );
         $idmap['ou'] = 'Idmap';
 
-        if (! $this->ldaph->exists($dn))
+        if (! $this->ldaph->exists($dn)) {
+            clearos_log('samba', 'adding Idmap LDAP attribute');
             $this->ldaph->add($dn, $idmap);
+        }
 
         // Users
         //--------------------------------------------------------
@@ -964,8 +977,10 @@ class OpenLDAP_Driver extends Engine
         $users[$guest_dn]['sambaSID'] = $domainsid . '-501';
 
         foreach ($users as $dn => $object) {
-            if ($this->ldaph->exists($dn))
+            if ($this->ldaph->exists($dn)) {
+                clearos_log('samba', "updating built-in user: $dn");
                 $this->ldaph->modify($dn, $object);
+            }
         }
     }
 
@@ -985,6 +1000,7 @@ class OpenLDAP_Driver extends Engine
             $user_manager = new User_Manager_Driver();
             $all_users = $user_manager->get_list();
 
+            clearos_log('samba', 'populating domain_users group');
             $group = new Group_Driver('domain_users');
             $group->set_members($all_users);
         } catch (Exception $e) {
@@ -1033,7 +1049,7 @@ class OpenLDAP_Driver extends Engine
         $groups[$group]['extensions']['samba']['group_type'] = 2;
         $groups[$group]['extensions']['samba']['display_name'] = 'Domain Admins';
         $groups[$group]['extensions']['mail']['distribution_list'] = 0;
-        $groups[$group]['members'] = array(Samba::CONSTANT_WINADMIN_CN);
+        $groups[$group]['members'] = array(Samba::CONSTANT_WINADMIN_USERNAME);
 
         $group = 'domain_users';
         $groups[$group]['core']['description'] = 'Domain Users';
@@ -1050,7 +1066,7 @@ class OpenLDAP_Driver extends Engine
         $groups[$group]['extensions']['samba']['group_type'] = 2;
         $groups[$group]['extensions']['mail']['distribution_list'] = 0;
         $groups[$group]['extensions']['samba']['display_name'] = 'Domain Guests';
-        $groups[$group]['members'] = array(Samba::CONSTANT_GUEST_CN);
+        $groups[$group]['members'] = array(Samba::CONSTANT_GUEST_USERNAME);
 
         $group = 'domain_computers';
         $groups[$group]['core']['description'] = 'Domain Computers';
@@ -1145,13 +1161,18 @@ class OpenLDAP_Driver extends Engine
         foreach ($groups as $group_name => $group_info) {
             $group = new Group_Driver($group_name);
 
-            if ($group->exists())
+            if ($group->exists()) {
+                clearos_log('samba', "updating built-in group $group_name");
                 $group->update($group_info);
-            else
+            } else {
+                clearos_log('samba', "adding built-in group $group_name");
                 $group->add($group_info);
+            }
 
-            if (isset($group_info['members']))
+            if (isset($group_info['members'])) {
+                clearos_log('samba', "updating members for $group_name");
                 $group->set_members($group_info['members']);
+            }
         }
     }
 }

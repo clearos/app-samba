@@ -29,17 +29,17 @@ for DIRINFO in $DIRS; do
 	if [ -d $DIR ]; then
 		FILEPERMS=`stat --format=%a $DIR`
 		if [ "$FILEPERMS" != "$PERMS" ]; then
-			logger -p local6.notice -t installer "app-samba-core - fixing broken directory permissions on $DIR"
+			logger -p local6.notice -t samba "fixing broken directory permissions on $DIR"
 			chmod $PERMS $DIR
 		fi
 
 		FILEOWNERSHIP=`stat --format=%U.%G $DIR`
 		if [ "$FILEOWNERSHIP" != "$OWNER.$GROUP" ]; then
-			logger -p local6.notice -t installer "app-samba-core - fixing broken directory ownership on $DIR"
+			logger -p local6.notice -t samba "fixing broken directory ownership on $DIR"
 			chown $OWNER.$GROUP $DIR
 		fi
 	else
-		logger -p local6.notice -t installer "app-samba-core - adding samba directory: $DIR"
+		logger -p local6.notice -t samba "adding samba directory: $DIR"
 		install -m $PERMS -o $OWNER -g $GROUP -d $DIR
 	fi
 done

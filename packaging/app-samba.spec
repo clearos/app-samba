@@ -51,6 +51,7 @@ cp -r * %{buildroot}/usr/clearos/apps/samba/
 
 install -d -m 0755 %{buildroot}/var/clearos/samba
 install -d -m 0755 %{buildroot}/var/clearos/samba/backup
+install -d -m 0775 %{buildroot}/var/clearos/samba/lock
 install -D -m 0755 packaging/add-samba-directories %{buildroot}/usr/sbin/add-samba-directories
 install -D -m 0755 packaging/add-windows-group-info %{buildroot}/usr/sbin/add-windows-group-info
 install -D -m 0644 packaging/filewatch-samba-accounts.conf %{buildroot}/etc/clearsync.d/filewatch-samba-accounts.conf
@@ -106,6 +107,7 @@ exit 0
 %dir /usr/clearos/apps/samba
 %dir /var/clearos/samba
 %dir /var/clearos/samba/backup
+%dir %attr(0775,root,webconfig) /var/clearos/samba/lock
 /usr/clearos/apps/samba/deploy
 /usr/clearos/apps/samba/language
 /usr/clearos/apps/samba/libraries
