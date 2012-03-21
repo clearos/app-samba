@@ -315,10 +315,14 @@ class Samba extends Software
     {
         clearos_profile(__METHOD__, __LINE__);
 
+        // Wow.  How did this simple method get some complex and messy.
+        
         // Using the net command is expensive, so cache this data
         //-------------------------------------------------------
 
         clearstatcache();
+
+        $cached_sid = '';
 
         $file = new File(self::FILE_DOMAIN_SID_CACHE, FALSE);
 
@@ -327,8 +331,8 @@ class Samba extends Software
             $cache_time = time() - $stat['ctime'];
 
             if ($cache_time < self::CONSTANT_DOMAIN_SID_CACHE_TIME) {
-                $sid = $file->get_contents();
-                return $sid;
+                $cached_sid = $file->get_contents();
+                return $cached_sid;
             }
 
             $file->delete();
@@ -337,10 +341,23 @@ class Samba extends Software
         // Get SID from net command
         //-------------------------
 
-        $shell = new Shell();
-        $shell->execute(self::COMMAND_NET, 'getdomainsid', TRUE);
+        $set_local_sid = FALSE;
 
-        $raw_output = $shell->get_output();
+        try {
+            $shell = new Shell();
+            $shell->execute(self::COMMAND_NET, 'getdomainsid', TRUE);
+            $raw_output = $shell->get_output();
+        } catch (Exception $e) {
+            $set_local_sid = TRUE;
+            // TODO: Mystery.  The getdomainsid sometimes fails with
+            // "Could not fetch local SID".  I'm missing a step somewhere.
+        }
+
+        if (($set_local_sid) && !empty($cached_sid)) {
+            $shell->execute(self::COMMENT_NET, "setlocalsid $cached_sid", TRUE);
+            $shell->execute(self::COMMAND_NET, 'getdomainsid', TRUE);
+            $raw_output = $shell->get_output();
+        }
 
         $sid = '';
 
