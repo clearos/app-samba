@@ -1341,7 +1341,7 @@ class Samba extends Software
         flock($initalizing_lock, LOCK_UN);
         fclose($initalizing_lock);
 
-        $file = new File($initalizing_lock);
+        $file = new File(self::FILE_INITIALIZING);
 
         if ($file->exists())
             $file->delete();
