@@ -354,6 +354,7 @@ class Samba extends Software
         }
 
         if (($set_local_sid) && !empty($cached_sid)) {
+            clearos_log('samba', 'setting local SID');
             $shell->execute(self::COMMENT_NET, "setlocalsid $cached_sid", TRUE);
             $shell->execute(self::COMMAND_NET, 'getdomainsid', TRUE);
             $raw_output = $shell->get_output();
