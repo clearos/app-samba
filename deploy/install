@@ -23,3 +23,8 @@ if [ -e /var/clearos/samba/initialized_local ]; then
     /sbin/service nmb start
     /sbin/service smb start
 fi
+
+# Reload clearsyncd
+#------------------
+
+/sbin/service clearsyncd condrestart >/dev/null 2>&1

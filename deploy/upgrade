@@ -31,11 +31,6 @@ if [ -n "$CHECK" ]; then
     mv /etc/samba/smb.conf.new /etc/samba/smb.conf
 fi
 
-# Reload clearsyncd
-#------------------
-
-/sbin/service clearsyncd condrestart >/dev/null 2>&1
-
 # Beta upgrade tasks
 #-------------------
 
