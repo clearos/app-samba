@@ -1,7 +1,7 @@
 
 Name: app-samba
 Epoch: 1
-Version: 1.0.10
+Version: 1.1.0
 Release: 1%{dist}
 Summary: Windows Networking
 License: GPLv3
@@ -20,7 +20,7 @@ Requires: samba >= 3.6.1
 Windows Networking description...
 
 %package core
-Summary: Windows Networking - APIs and install
+Summary: Windows Networking - Core
 License: LGPLv3
 Group: ClearOS/Libraries
 Requires: app-base-core
