@@ -638,7 +638,7 @@ class OpenLDAP_Driver extends Engine
     {
         clearos_profile(__METHOD__, __LINE__);
 
-        if (! preg_match('/^[\w\$]+$/', $computer))
+        if (! preg_match('/^([a-zA-Z0-9_\-\.]+)\$$/', $computer))
             return lang('samba_computer_invalid');
     }
 
