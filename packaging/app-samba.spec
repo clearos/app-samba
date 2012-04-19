@@ -17,7 +17,7 @@ Requires: app-network
 Requires: samba >= 3.6.1
 
 %description
-Windows Networking description...
+Windows Networking provides the necessary glue to interoperate with Windows systems.  The app provides authentication services, file and print, along with Windows domain management.
 
 %package core
 Summary: Windows Networking - Core
@@ -37,7 +37,7 @@ Requires: system-mode-driver
 Requires: tdb-tools >= 1.2.9
 
 %description core
-Windows Networking description...
+Windows Networking provides the necessary glue to interoperate with Windows systems.  The app provides authentication services, file and print, along with Windows domain management.
 
 This package provides the core API and libraries.
 
