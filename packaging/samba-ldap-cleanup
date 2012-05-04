@@ -2,15 +2,15 @@
 <?php
 
 /**
- * Samba add machine script.
+ * Samba LDAP cleanup.
  *
  * @category   Apps
- * @package    Samba
+ * @package    Account_Import
  * @subpackage Scripts
  * @author     ClearFoundation <developer@clearfoundation.com>
  * @copyright  2008-2011 ClearFoundation
  * @license    http://www.gnu.org/copyleft/gpl.html GNU General Public License version 3 or later
- * @link       http://www.clearfoundation.com/docs/developer/apps/samba/
+ * @link       http://www.clearfoundation.com/docs/developer/apps/account_import/
  */
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -45,19 +45,9 @@ use \clearos\apps\samba\OpenLDAP_Driver as OpenLDAP_Driver;
 
 clearos_load_library('samba/OpenLDAP_Driver');
 
-use \Exception as Exception;
-
 ///////////////////////////////////////////////////////////////////////////////
 // M A I N
 ///////////////////////////////////////////////////////////////////////////////
 
-$computer = (isset($argv[1])) ? $argv[1] : '';
-
-// FIXME: remove this after _clearos_error_handler in the framework has been reviewed
-set_error_handler('no_errors_please');
-
-$samba = new OpenLDAP_Driver();
-$samba->add_computer($computer);
-
-function no_errors_please()
-{}
+$samba_ldap = new OpenLDAP_Driver();
+$samba_ldap->cleanup_entries();

@@ -1203,19 +1203,19 @@ class Samba extends Software
         $smbd->set_boot_state(TRUE);
         $winbind->set_boot_state(TRUE);
 
-        // If PDC, join the local system to itself
-        //----------------------------------------
-
-        clearos_log('samba', 'joining system to the domain');
-
-        $this->_net_rpc_join($password);
-
         // Grant default privileges to winadmin et al
         //-------------------------------------------
 
         clearos_log('samba', 'granting privileges for domain_users');
 
         $this->_net_grant_default_privileges($password);
+
+        // Join the local system to itself
+        //--------------------------------
+
+        clearos_log('samba', 'joining system to the domain');
+
+        $this->_net_rpc_join($password);
 
         // Update local file permissions
         //------------------------------
@@ -1228,6 +1228,18 @@ class Samba extends Software
         clearos_log('samba', 'finished local initialization');
 
         $this->set_local_system_initialized(TRUE);
+
+        // Cleanup LDAP
+        //-------------
+
+        try {
+            if ($this->get_mode() === self::MODE_PDC) {
+                $ldap = new OpenLDAP_Driver();
+                $ldap->cleanup_entries();
+            }
+        } catch (Exception $e) {
+            // Not fatal
+        }
 
         // Cleanup file / file lock
         //-------------------------
@@ -1707,12 +1719,26 @@ class Samba extends Software
         $user->reset_password($password, $password, self::CONSTANT_WINADMIN_USERNAME);
 
         // Rejoin for good measure (hard time getting net rpc join to run consistently)
+        //-----------------------------------------------------------------------------
+
         if ($this->get_mode() === self::MODE_PDC) {
             $ldap = new OpenLDAP_Driver();
             $ldap->add_computer($this->get_netbios_name());
         }
 
         $this->_net_rpc_join($password);
+
+        // Cleanup LDAP
+        //-------------
+
+        try {
+            if ($this->get_mode() === self::MODE_PDC) {
+                $ldap = new OpenLDAP_Driver();
+                $ldap->cleanup_entries();
+            }
+        } catch (Exception $e) {
+            // Not fatal
+        }
     }
 
     /**
@@ -2385,15 +2411,15 @@ class Samba extends Software
 
         $workgroup = strtoupper($workgroup);
 
+        // This is an expensive call, so bail if nothing has changed LDAP-wise
+        if ($workgroup == $this->get_workgroup())
+            return;
+
         // Change smb.conf
         $this->_set_share_info('global', 'workgroup', $workgroup);
 
         // In AD mode, we're done
         if ($this->get_mode() === self::MODE_AD_CONNECTOR)
-            return;
-
-        // This is an expensive call, so bail if nothing has changed LDAP-wise
-        if ($workgroup == $this->get_workgroup())
             return;
 
         // LDAP changes on master
@@ -2951,19 +2977,25 @@ class Samba extends Software
         $net_error = '';
 
         $shell = new Shell();
+        $options['validate_exit_code'] = FALSE;
 
         for ($i = 0; $i < 10; $i++) { 
             sleep(2); // wait or daemons to start, not atomic
 
             try {
-                $shell->execute(self::COMMAND_NET, 'rpc rights grant "' . $domain . '\Domain Admins" ' .
+                $retval = $shell->execute(self::COMMAND_NET, 'rpc rights grant "' . $domain . '\Domain Admins" ' .
                     self::DEFAULT_ADMIN_PRIVS . ' -I ' . $target . ' -U winadmin%' . $password, TRUE, $options);
 
-                $net_error = '';
-                break;
+                if ($retval == 0) {
+                    $net_error = '';
+                    break;
+                } else {
+                    $net_error = $shell->get_last_output_line();
+                    clearos_log('samba', 'waiting for net rpc rights response');
+                }
             } catch (Engine_Exception $e) {
                 $net_error = clearos_exception_message($e);
-                clearos_log('samba', 'waiting for net rpc rights response');
+                clearos_log('samba', 'stilll waiting for net rpc rights response');
             }
         }
 
@@ -3016,17 +3048,22 @@ class Samba extends Software
         $shell = new Shell();
 
         $options['stdin'] = TRUE;
+        $options['validate_exit_code'] = FALSE;
 
-        for ($inx = 1; $inx < 15; $inx++) {
+        for ($inx = 1; $inx < 10; $inx++) {
             try {
                 sleep(2);
-                $shell->execute(self::COMMAND_NET, 'rpc join -S ' .$netbios_name .
+                $retval = $shell->execute(self::COMMAND_NET, 'rpc join -S ' .$netbios_name .
                     ' -I ' . $target .  ' -U winadmin%' . $password, TRUE, $options);
-                $succeeded = TRUE;
-                break;
+                if ($retval == 0) {
+                    $succeeded = TRUE;
+                    break;
+                } else {
+                    clearos_log('samba', 'waiting for net rpc join response');
+                }
             } catch (Exception $e) {
                 // Try again
-                clearos_log('samba', 'waiting for net rpc join response');
+                clearos_log('samba', 'still waiting for net rpc join response');
             }
         }
 

@@ -1,5 +1,5 @@
 <?php
-$lang['samba_not_finished_initializing_yet'] = 'Sorry, initialization can take some time. Please come back in a minute or two';
+$lang['samba_not_finished_initializing_yet'] = 'Sorry, initialization can take some time. Please come back in a minute or two.';
 $lang['samba_active_directory_connector'] = 'Active Directory Connector';
 $lang['samba_active_directory_connector_mode'] = 'Active Directory Connector Mode';
 $lang['samba_active_directory_connector_mode_help'] = 'To change the Server Name, you will need to reconnect this system to Active Directory.';

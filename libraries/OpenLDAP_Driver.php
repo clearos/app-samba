@@ -90,6 +90,7 @@ clearos_load_library('samba/Winbind');
 // Exceptions
 //-----------
 
+use \Exception as Exception;
 use \clearos\apps\base\Engine_Exception as Engine_Exception;
 use \clearos\apps\base\Validation_Exception as Validation_Exception;
 use \clearos\apps\samba\Samba_Not_Initialized_Exception as Samba_Not_Initialized_Exception;
@@ -162,13 +163,21 @@ class OpenLDAP_Driver extends Engine
     {
         clearos_profile(__METHOD__, __LINE__);
 
-        Validation_Exception::is_valid($this->validate_computer($name));
-
         // Append dollar sign and uppercase
         if (!preg_match('/\$$/', $name))
             $name = $name . '$';
 
-        $name = strtolower($name);
+        // $name = strtolower($name);
+        $name = strtoupper($name);
+
+        Validation_Exception::is_valid($this->validate_computer($name));
+
+        // If computer exists, delete it
+        try {
+            $this->delete_computer($name);
+        } catch (Engine_Exception $e) {
+            // Not fatal
+        }
 
         if ($this->ldaph == NULL)
             $this->_get_ldap_handle();
@@ -193,6 +202,7 @@ class OpenLDAP_Driver extends Engine
         $ldap_object['homeDirectory'] = '/dev/null';
         $ldap_object['loginShell'] = '/sbin/nologin';
         $ldap_object['sambaSID'] = $domain_sid . '-' . $ldap_object['uidNumber'] ;
+        $ldap_object['sambaAcctFlags'] = '[W          ]';
 
         $dn = 'cn=' . $this->ldaph->dn_escape($name) . ',' . OpenLDAP::get_computers_container();
 
@@ -275,7 +285,7 @@ class OpenLDAP_Driver extends Engine
         $result = $this->ldaph->search(
             '(objectclass=posixAccount)',
             OpenLDAP::get_computers_container(),
-            array('cn', 'sambaSID', 'uidNumber')
+            array('uid', 'sambaSID', 'uidNumber')
         );
 
         $entry = $this->ldaph->get_first_entry($result);
@@ -283,7 +293,7 @@ class OpenLDAP_Driver extends Engine
         while ($entry) {
             $attributes = $this->ldaph->get_attributes($entry);
 
-            $computer = $attributes['cn']['0'];
+            $computer = $attributes['uid']['0'];
             $computers[$computer]['SID'] = isset($attributes['sambaSID'][0]) ? $attributes['sambaSID'][0] : "";
             $computers[$computer]['uidNumber'] = $attributes['uidNumber'][0];
 
@@ -580,7 +590,7 @@ class OpenLDAP_Driver extends Engine
         $base_dn = OpenLDAP::get_base_dn();
 
         $result = $this->ldaph->search(
-            "(sambaSID=$sid)",
+            "(&(objectclass=sambaDomain)(sambaSID=$sid))",
             $base_dn,
             array("sambaDomainName")
         );
@@ -639,7 +649,76 @@ class OpenLDAP_Driver extends Engine
         clearos_profile(__METHOD__, __LINE__);
 
         if (! preg_match('/^([a-zA-Z0-9_\-\.]+)\$$/', $computer))
-            return lang('samba_computer_invalid');
+            return lang('samba_computer_invalid') . " " . $computer; // FIXME
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // F R I E N D  M E T H O D S
+    ///////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Cleans up stray LDAP entries.
+     *
+     * @access private
+     *
+     * @return void
+     */
+
+    public function cleanup_entries()
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        if ($this->ldaph == NULL)
+            $this->_get_ldap_handle();
+
+        // Look for stray sambaSID dn entries
+        //-----------------------------------
+
+        $result = $this->ldaph->search('(objectclass=sambaSidEntry)');
+        $entry = $this->ldaph->get_first_entry($result);
+
+        $idmap_list = array();
+
+        while ($entry) {
+            $idmap_list[] = $this->ldaph->get_dn($entry);
+            $entry = $this->ldaph->next_entry($entry);
+        }
+
+        // Look for stray sambaDomain entries
+        //-----------------------------------
+
+        $samba = new Samba();
+        $smbconf_domain = strtoupper($samba->get_workgroup());
+
+        $result = $this->ldaph->search('(objectclass=sambaDomain)');
+        $entry = $this->ldaph->get_first_entry($result);
+
+        $domain_list = array();
+
+        while ($entry) {
+            $domain_dn = $this->ldaph->get_dn($entry);
+            $domain = preg_replace('/^sambaDomainName=/', '', $domain_dn);
+            $domain = preg_replace('/,.*/', '', $domain);
+            $domain = strtoupper($domain);
+
+            if ($domain != $smbconf_domain)
+                $domain_list[] = $this->ldaph->get_dn($entry);
+
+            $entry = $this->ldaph->next_entry($entry);
+        }
+
+        // Perform cleanup
+        //----------------
+
+        foreach ($idmap_list as $idmap) {
+            clearos_log('samba', 'cleaning up idmap entry: ' . $idmap);
+            $this->ldaph->delete($idmap);
+        }
+
+        foreach ($domain_list as $domain) {
+            clearos_log('samba', 'cleaning up domain entry: ' . $domain);
+            $this->ldaph->delete($domain);
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////

@@ -1,7 +1,7 @@
 
 Name: app-samba
 Epoch: 1
-Version: 1.1.0
+Version: 1.1.1
 Release: 1%{dist}
 Summary: Windows Networking
 License: GPLv3
@@ -24,12 +24,12 @@ Summary: Windows Networking - Core
 License: LGPLv3
 Group: ClearOS/Libraries
 Requires: app-base-core
-Requires: app-accounts-core >= 1:1.0.7
-Requires: app-groups-core >= 1:1.0.7
-Requires: app-users-core >= 1:1.0.6
+Requires: app-accounts-core
+Requires: app-groups-core
+Requires: app-users-core >= 1:1.1.1
 Requires: app-network-core
-Requires: app-openldap-directory-core >= 1:1.0.7
-Requires: app-samba-extension-core >= 1:1.0.7
+Requires: app-openldap-directory-core
+Requires: app-samba-extension-core
 Requires: csplugin-filewatch
 Requires: samba-client >= 3.6.1
 Requires: samba-winbind >= 3.6.1
@@ -62,6 +62,7 @@ install -D -m 0644 packaging/nmb.php %{buildroot}/var/clearos/base/daemon/nmb.ph
 install -D -m 0755 packaging/samba-add-machine %{buildroot}/usr/sbin/samba-add-machine
 install -D -m 0755 packaging/samba-homes %{buildroot}/usr/sbin/samba-homes
 install -D -m 0755 packaging/samba-init %{buildroot}/usr/sbin/samba-init
+install -D -m 0755 packaging/samba-ldap-cleanup %{buildroot}/usr/sbin/samba-ldap-cleanup
 install -D -m 0644 packaging/smb.ldap.conf %{buildroot}/var/clearos/ldap/synchronize/smb.ldap.conf
 install -D -m 0644 packaging/smb.php %{buildroot}/var/clearos/base/daemon/smb.php
 install -D -m 0644 packaging/smb.winbind.conf %{buildroot}/var/clearos/ldap/synchronize/smb.winbind.conf
@@ -121,6 +122,7 @@ exit 0
 /usr/sbin/samba-add-machine
 /usr/sbin/samba-homes
 /usr/sbin/samba-init
+/usr/sbin/samba-ldap-cleanup
 /var/clearos/ldap/synchronize/smb.ldap.conf
 /var/clearos/base/daemon/smb.php
 /var/clearos/ldap/synchronize/smb.winbind.conf
