@@ -37,6 +37,8 @@ fi
 /usr/clearos/apps/samba/deploy/upgradebeta >/dev/null 2>&1
 [ -e /var/clearos/samba/initialized ] && touch /var/clearos/samba/initialized_directory
 
+rm -f /var/clearos/samba/lock/*
+
 # Run events
 #-----------
 

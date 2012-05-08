@@ -52,6 +52,15 @@ clearos_load_language('samba');
 // D E P E N D E N C I E S
 ///////////////////////////////////////////////////////////////////////////////
 
+// Factories
+//----------
+
+use \clearos\apps\users\User_Factory as User;
+use \clearos\apps\users\User_Manager_Factory as User_Manager;
+
+clearos_load_library('users/User_Factory');
+clearos_load_library('users/User_Manager_Factory');
+
 // Classes
 //--------
 
@@ -70,6 +79,7 @@ use \clearos\apps\samba\Nmbd as Nmbd;
 use \clearos\apps\samba\Samba as Samba;
 use \clearos\apps\samba\Smbd as Smbd;
 use \clearos\apps\samba\Winbind as Winbind;
+use \clearos\apps\users\User_Engine as User_Engine;
 
 clearos_load_library('base/Engine');
 clearos_load_library('base/File');
@@ -86,6 +96,7 @@ clearos_load_library('samba/Nmbd');
 clearos_load_library('samba/Samba');
 clearos_load_library('samba/Smbd');
 clearos_load_library('samba/Winbind');
+clearos_load_library('users/User_Engine');
 
 // Exceptions
 //-----------
@@ -680,7 +691,11 @@ class OpenLDAP_Driver extends Engine
         $idmap_list = array();
 
         while ($entry) {
-            $idmap_list[] = $this->ldaph->get_dn($entry);
+            $idmap_dn = $this->ldaph->get_dn($entry);
+
+            if (preg_match('/ou=Idmap,/i', $idmap_dn))
+                $idmap_list[] = $idmap_dn;
+
             $entry = $this->ldaph->next_entry($entry);
         }
 
@@ -718,6 +733,70 @@ class OpenLDAP_Driver extends Engine
         foreach ($domain_list as $domain) {
             clearos_log('samba', 'cleaning up domain entry: ' . $domain);
             $this->ldaph->delete($domain);
+        }
+    }
+
+    /**
+     * Cleans up SIDs..
+     *
+     * @access private
+     *
+     * @return void
+     */
+
+    public function cleanup_sids()
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        // Fix domain SID
+        //---------------
+
+        $file = new File(Samba::FILE_DOMAIN_SID);
+
+        if ($file->exists()) {
+            $ldap = new LDAP_Driver();
+            $ldaph = $ldap->get_ldap_handle();
+
+            $result = $ldaph->search('(objectclass=sambaDomain)');
+            $entry = $ldaph->get_first_entry($result);
+
+            while ($entry) {
+                $attributes = $ldaph->get_attributes($entry);
+                $domain_dn = $ldaph->get_dn($entry);
+                $sid = trim($file->get_contents());
+
+                if ($attributes['sambaSID'][0] != $sid) {
+                    $ldap_object['sambaSID'] = $sid;
+                    $ldaph->modify($domain_dn, $ldap_object);
+                    clearos_log('samba', 'fixing domain SID for ' . $attributes['sambaDomainName'][0]);
+
+                    $samba = new Samba();
+                    $samba->set_local_sid($sid);
+                }
+
+                $entry = $ldaph->next_entry($entry);
+            }
+        }
+
+        // Cleanup user SIDs
+        //------------------
+
+        if (!empty($sid)) {
+            $user_manager = User_Manager::create();
+            $users = $user_manager->get_list(User_Engine::FILTER_ALL);
+
+            foreach ($users as $username) {
+                $user = User::create($username);
+
+                $details = $user->get_info();
+                $user_sid = $sid . '-' . $details['core']['uid_number'];
+
+                if ($details['extensions']['samba']['sid'] != $user_sid) {
+                    $user_info['extensions']['samba']['sid'] = $user_sid;
+                    $user->update($user_info);
+                    clearos_log('samba', 'fixing user SID for ' . $username);
+                }
+            }
         }
     }
 

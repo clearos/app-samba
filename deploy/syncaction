@@ -55,12 +55,16 @@ if [ "$1" == "configuration_change_event" ]; then
     if [ -e /var/clearos/samba/initialized ]; then
         set +e
         update_interfaces_config
-        /usr/sbin/samba-ldap-cleanup
+        /usr/clearos/apps/samba/deploy/cleanup-ldap
+        /usr/clearos/apps/samba/deploy/cleanup-sids
+        # Seems to do some sort of LDAP sync, there's a better way no doubt
+        /usr/bin/pdbedit -L -v >/dev/null 2>&1
 
         logger -p local6.notice -t clearsync "samba - reloading daemons"
         [ -x /etc/rc.d/init.d/winbind ] && /sbin/service winbind reload
         [ -x /etc/rc.d/init.d/nmb ] && /sbin/service nmb reload
         [ -x /etc/rc.d/init.d/smb ] && /sbin/service smb reload
+
     fi
 
 # Initialize directory when it is online

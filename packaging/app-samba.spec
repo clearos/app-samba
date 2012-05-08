@@ -1,7 +1,7 @@
 
 Name: app-samba
 Epoch: 1
-Version: 1.1.1
+Version: 1.1.2
 Release: 1%{dist}
 Summary: Windows Networking
 License: GPLv3
@@ -62,7 +62,6 @@ install -D -m 0644 packaging/nmb.php %{buildroot}/var/clearos/base/daemon/nmb.ph
 install -D -m 0755 packaging/samba-add-machine %{buildroot}/usr/sbin/samba-add-machine
 install -D -m 0755 packaging/samba-homes %{buildroot}/usr/sbin/samba-homes
 install -D -m 0755 packaging/samba-init %{buildroot}/usr/sbin/samba-init
-install -D -m 0755 packaging/samba-ldap-cleanup %{buildroot}/usr/sbin/samba-ldap-cleanup
 install -D -m 0644 packaging/smb.ldap.conf %{buildroot}/var/clearos/ldap/synchronize/smb.ldap.conf
 install -D -m 0644 packaging/smb.php %{buildroot}/var/clearos/base/daemon/smb.php
 install -D -m 0644 packaging/smb.winbind.conf %{buildroot}/var/clearos/ldap/synchronize/smb.winbind.conf
@@ -122,7 +121,6 @@ exit 0
 /usr/sbin/samba-add-machine
 /usr/sbin/samba-homes
 /usr/sbin/samba-init
-/usr/sbin/samba-ldap-cleanup
 /var/clearos/ldap/synchronize/smb.ldap.conf
 /var/clearos/base/daemon/smb.php
 /var/clearos/ldap/synchronize/smb.winbind.conf

@@ -5,7 +5,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 $app['basename'] = 'samba';
-$app['version'] = '1.1.1';
+$app['version'] = '1.1.2';
 $app['release'] = '1';
 $app['vendor'] = 'ClearFoundation';
 $app['packager'] = 'ClearFoundation';
@@ -82,10 +82,6 @@ $app['core_file_manifest'] = array(
     ),
     'samba-init' => array(
         'target' => '/usr/sbin/samba-init',
-        'mode' => '0755',
-    ),
-    'samba-ldap-cleanup' => array(
-        'target' => '/usr/sbin/samba-ldap-cleanup',
         'mode' => '0755',
     ),
     'nmb.php'=> array('target' => '/var/clearos/base/daemon/nmb.php'),
