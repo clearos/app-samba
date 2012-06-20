@@ -1302,16 +1302,6 @@ class Samba extends Software
         if ($this->is_initialized() && !$force)
             return;
 
-        // Lock state file
-        //----------------
-
-        $initalizing_lock = fopen(self::FILE_INITIALIZING, 'w');
-
-        if (!flock($initalizing_lock, LOCK_EX | LOCK_NB)) {
-            clearos_log('samba', 'initialization is already running');
-            return;
-        }
-
         // Bail if driver not set
         //-----------------------
 
@@ -1322,20 +1312,38 @@ class Samba extends Software
             return;
         }
 
-        // If Active Directory, it's really already initialized
-        // Initialize if LDAP is available
-        //--------------------------------
-        // TODO: this should only happen when accounts system is initialized
+        // Bail if slave and master is not Samba-ready
+        //--------------------------------------------
 
         $sysmode = Mode_Factory::create();
         $mode = $sysmode->get_mode();
+
+        if ($mode === Mode_Engine::MODE_SLAVE) {
+            $ldap = new OpenLDAP_Driver();
+
+            if (! $ldap->is_directory_ready())
+                return;
+        }
+
+        // Lock state file
+        //----------------
+
+        $initalizing_lock = fopen(self::FILE_INITIALIZING, 'w');
+
+        if (!flock($initalizing_lock, LOCK_EX | LOCK_NB)) {
+            clearos_log('samba', 'initialization is already running');
+            return;
+        }
+
+        // Initialize Samba system
+        //------------------------
 
         if ($driver === 'active_directory') {
             $this->initialize_ad_system();
         } else if (($mode === Mode_Engine::MODE_MASTER) || ($mode === Mode_Engine::MODE_STANDALONE)) {
             $this->initialize_master_system('CLEARSYSTEM', NULL, $force);
         } else if ($mode === Mode_Engine::MODE_SLAVE) {
-            $this->initialize_slave_system();
+            $this->initialize_slave_system('BDC');
         }
 
         // Delete SID cache
@@ -1447,7 +1455,7 @@ class Samba extends Software
         // Handle Samba configuration and post cleanup
         //--------------------------------------------
 
-        $this->_update_secrets($password);
+        $this->_update_secrets();
     }
 
     /**
@@ -1460,22 +1468,26 @@ class Samba extends Software
      * @throws Engine_Exception
      */
 
-    public function initialize_slave_system($netbios, $password)
+    public function initialize_slave_system($netbios, $password = NULL)
     {
         clearos_profile(__METHOD__, __LINE__);
 
-        Validation_Exception::is_valid($this->validate_netbios_name($netbios));
-        Validation_Exception::is_valid($this->validate_password($password));
+        clearos_log('samba', 'initializing slave mode');
 
-        // Directory needs to be initialized
-        //----------------------------------
+        // Initialize the LDAP components
+        // Note: directory needs to be initialized *first* since validation routines need it
+        //----------------------------------------------------------------------------------
 
         $ldap = new OpenLDAP_Driver();
+        $ldap->initialize_slave_system();
 
-        if (! $ldap->is_directory_initialized())
-            throw new Samba_Not_Initialized_Exception();
+        // Validation
+        //-----------
 
-        clearos_log('samba', 'initializing slave mode');
+        Validation_Exception::is_valid($this->validate_netbios_name($netbios));
+
+        if (! is_null($password))
+            Validation_Exception::is_valid($this->validate_password($password));
 
         // Bail if we are not a slave system
         //----------------------------------
@@ -1500,7 +1512,7 @@ class Samba extends Software
         $this->set_netbios_name($netbios);
         $this->set_workgroup($workgroup);
         $this->set_wins_server_and_support($master, FALSE);
-        $this->_update_secrets($password);
+        $this->_update_secrets();
 
         clearos_log('samba', 'starting up Samba services');
         $nmbd = new Nmbd();
@@ -1534,9 +1546,35 @@ class Samba extends Software
         // Join system to domain
         //----------------------
 
-        clearos_log('samba', 'joining system to the domain');
+        if (! is_null($password)) {
+            clearos_log('samba', 'joining system to the domain');
+            $this->_net_rpc_join($password, $master);
+        }
+    }
 
-        $this->_net_rpc_join($password, $master);
+    /**
+     * Checks to see if slave node can be initialized.
+     *
+     * @return boolean TRUE if slave node cannot be initialized due to incomplete master
+     * @throws Engine_Exception
+     */
+
+    public function is_blocked_slave()
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        $sysmode = Mode_Factory::create();
+        $mode = $sysmode->get_mode();
+
+        if ($mode !== Mode_Engine::MODE_SLAVE)
+            return FALSE;
+
+        $ldap = new OpenLDAP_Driver();
+
+        if ($ldap->is_directory_ready())
+            return FALSE;
+        else
+            return TRUE;
     }
 
     /**
@@ -2410,16 +2448,17 @@ class Samba extends Software
         Validation_Exception::is_valid($this->validate_workgroup($workgroup));
 
         $workgroup = strtoupper($workgroup);
-
-        // This is an expensive call, so bail if nothing has changed LDAP-wise
-        if ($workgroup == $this->get_workgroup())
-            return;
+        $current_workgroup = $this->get_workgroup();
 
         // Change smb.conf
         $this->_set_share_info('global', 'workgroup', $workgroup);
 
         // In AD mode, we're done
         if ($this->get_mode() === self::MODE_AD_CONNECTOR)
+            return;
+
+        // This is an expensive call, so bail if nothing has changed LDAP-wise
+        if ($workgroup == $current_workgroup)
             return;
 
         // LDAP changes on master
@@ -3083,16 +3122,11 @@ class Samba extends Software
     /**
      * Cleans up the secrets file.
      *
-     * The winpassword is only needed for the initialization in order
-     * to net rpc join itself to the domain. 
-     *
-     * @param string $winpassword password
-     *
      * @return void
      * @throws Engine_Exception
      */
 
-    protected function _update_secrets($winpassword = NULL)
+    protected function _update_secrets()
     {
         clearos_profile(__METHOD__, __LINE__);
 

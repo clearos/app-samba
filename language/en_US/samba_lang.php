@@ -104,6 +104,7 @@ $lang['samba_hostname_conflicts_with_windows_domain'] = 'Hostname conflicts with
 $lang['samba_local_master_setting_invalid'] = 'Local master setting is invalid.';
 $lang['samba_logon_drive_invalid'] = 'Login driver is invalid.';
 $lang['samba_master_node_should_be_pdc'] = 'Master node should be a PDC.';
+$lang['samba_master_node_needs_initialization'] = 'Master node needs to be initialized before proceeding.';
 $lang['samba_member_server'] = 'Member Server';
 $lang['samba_netlogon_directory'] = 'Netlogon Directory.';
 $lang['samba_os_level_setting_invalid'] = 'OS level is invalid.';

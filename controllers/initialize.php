@@ -76,6 +76,7 @@ class Initialize extends ClearOS_Controller
             $this->samba->initialize();
 
             $is_local_initialized = $this->samba->is_local_system_initialized();
+            $is_blocked_slave = $this->samba->is_blocked_slave();
             $is_initializing = $this->samba->is_initializing();
             $is_initialized = $this->samba->is_initialized();
         } catch (Exception $e) {
@@ -89,6 +90,10 @@ class Initialize extends ClearOS_Controller
         if ($is_local_initialized) {
             redirect('/samba');
         } else if ($is_initializing) {
+            $data['initializing'] = TRUE;
+            $this->page->view_form('samba/initializing', $data, lang('samba_app_name'));
+        } else if ($is_blocked_slave) {
+            $data['initializing'] = FALSE;
             $this->page->view_form('samba/initializing', $data, lang('samba_app_name'));
         } else {
             $this->edit();

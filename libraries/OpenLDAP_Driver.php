@@ -498,7 +498,24 @@ class OpenLDAP_Driver extends Engine
     }
 
     /**
-     * Checks to see if Samba has been initialized in LDAP.
+     * Initializes slave node with the necessary Samba elements.
+     *
+     * @return void
+     * @throws Engine_Exception
+     */
+
+    public function initialize_slave_system()
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        $file = new File(self::FILE_INITIALIZED);
+
+        if (! $file->exists())
+            $file->create('root', 'root', '0644');
+    }
+
+    /**
+     * Checks to see if Samba directory has been initialized.
      *
      * @return boolean TRUE if Samba has been initialized in LDAP
      * @throws Engine_Exception, LDAP_Offline_Exception
@@ -511,6 +528,36 @@ class OpenLDAP_Driver extends Engine
         $file = new File(self::FILE_INITIALIZED);
 
         if ($file->exists())
+            return TRUE;
+        else
+            return FALSE;
+    }
+
+    /**
+     * Checks to see if directory is Samba-ready.
+     *
+     * Slave nodes need to know if Samba components exist in the directory.
+     *
+     * @return boolean TRUE if directory is Samba-ready
+     * @throws Engine_Exception, LDAP_Offline_Exception
+     */
+
+    public function is_directory_ready()
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        if ($this->ldaph === NULL)
+            $this->_get_ldap_handle();
+
+        $result = $this->ldaph->search(
+            "(objectclass=sambaDomain)",
+            OpenLDAP::get_base_dn(),
+            array("sambaDomainName", "sambaSID")
+        );
+
+        $entry = $this->ldaph->get_first_entry($result);
+
+        if ($entry)
             return TRUE;
         else
             return FALSE;
