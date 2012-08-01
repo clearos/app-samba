@@ -2739,7 +2739,7 @@ class Samba extends Software
     {
         clearos_profile(__METHOD__, __LINE__);
 
-        if (! (preg_match("/^([a-zA-Z][a-zA-Z0-9\-]*)$/", $workgroup) && (strlen($workgroup) <= 15)))
+        if (! (preg_match("/^([a-zA-Z][a-zA-Z0-9_\-]*)$/", $workgroup) && (strlen($workgroup) <= 15)))
             return lang('samba_windows_domain_invalid');
 
         $netbios_name = $this->get_netbios_name();
