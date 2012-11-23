@@ -2961,13 +2961,12 @@ class Samba extends Software
         $this->raw_lines = array();
         $this->shares = array();
         $this->values = array();
+        $lines = array();
 
         $file = new File(self::FILE_CONFIG);
 
-        if (! $file->exists())
-            $file->create('root', 'root', '0600');
-
-        $lines = $file->get_contents_as_array();
+        if ($file->exists())
+            $lines = $file->get_contents_as_array();
 
         $linecount = 0;
         $share = 'global';
