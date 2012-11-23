@@ -5,7 +5,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 $app['basename'] = 'samba';
-$app['version'] = '1.2.3';
+$app['version'] = '1.4.5';
 $app['release'] = '1';
 $app['vendor'] = 'ClearFoundation';
 $app['packager'] = 'ClearFoundation';
@@ -34,6 +34,10 @@ $app['controllers']['administrator']['title'] = lang('samba_administrator_accoun
 /////////////////////////////////////////////////////////////////////////////
 // Packaging
 /////////////////////////////////////////////////////////////////////////////
+
+$app['core_provides'] = array(
+    'system-windows-driver',
+);
 
 $app['requires'] = array(
     'app-accounts',
