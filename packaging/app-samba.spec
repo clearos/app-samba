@@ -1,7 +1,7 @@
 
 Name: app-samba
 Epoch: 1
-Version: 1.2.3
+Version: 1.4.5
 Release: 1%{dist}
 Summary: Windows Networking
 License: GPLv3
@@ -23,6 +23,7 @@ Windows Networking provides the necessary glue to interoperate with Windows syst
 Summary: Windows Networking - Core
 License: LGPLv3
 Group: ClearOS/Libraries
+Provides: system-windows-driver
 Requires: app-base-core
 Requires: app-accounts-core
 Requires: app-groups-core
@@ -55,7 +56,6 @@ install -d -m 0755 %{buildroot}/var/clearos/samba/backup
 install -d -m 0775 %{buildroot}/var/clearos/samba/lock
 install -D -m 0755 packaging/add-samba-directories %{buildroot}/usr/sbin/add-samba-directories
 install -D -m 0755 packaging/add-windows-group-info %{buildroot}/usr/sbin/add-windows-group-info
-install -D -m 0644 packaging/filewatch-samba-accounts.conf %{buildroot}/etc/clearsync.d/filewatch-samba-accounts.conf
 install -D -m 0644 packaging/filewatch-samba-configuration.conf %{buildroot}/etc/clearsync.d/filewatch-samba-configuration.conf
 install -D -m 0644 packaging/filewatch-samba-directory.conf %{buildroot}/etc/clearsync.d/filewatch-samba-directory.conf
 install -D -m 0644 packaging/filewatch-samba-network.conf %{buildroot}/etc/clearsync.d/filewatch-samba-network.conf
@@ -114,7 +114,6 @@ exit 0
 /usr/clearos/apps/samba/libraries
 /usr/sbin/add-samba-directories
 /usr/sbin/add-windows-group-info
-/etc/clearsync.d/filewatch-samba-accounts.conf
 /etc/clearsync.d/filewatch-samba-configuration.conf
 /etc/clearsync.d/filewatch-samba-directory.conf
 /etc/clearsync.d/filewatch-samba-network.conf

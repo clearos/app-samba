@@ -63,7 +63,6 @@ $app['core_requires'] = array(
 );
 
 $app['core_file_manifest'] = array( 
-    'filewatch-samba-accounts.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-accounts.conf'),
     'filewatch-samba-configuration.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-configuration.conf'),
     'filewatch-samba-directory.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-directory.conf'),
     'filewatch-samba-network.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-network.conf'),
