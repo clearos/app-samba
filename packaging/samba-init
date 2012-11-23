@@ -2,13 +2,10 @@
 <?php
 
 /**
- * Samba home directory creation.
- *
- * All other services on ClearOS us PAM to auto-create home directories on 
- * demand.  Samba does not auto-create, so this script manages this process.
+ * ClearOS Samba initializtion.
  *
  * @category   Apps
- * @package    Samba
+ * @package    Accounts
  * @subpackage Scripts
  * @author     ClearFoundation <developer@clearfoundation.com>
  * @copyright  2011 ClearFoundation
@@ -44,58 +41,28 @@ require_once $bootstrap . '/bootstrap.php';
 // D E P E N D E N C I E S
 ///////////////////////////////////////////////////////////////////////////////
 
-// Factories
-//----------
+use \clearos\apps\samba_common\Samba as Samba;
 
-use \clearos\apps\users\User_Manager_Factory as User_Manager;
-
-clearos_load_library('users/User_Manager_Factory');
-
-// Classes
-//--------
-
-use \clearos\apps\base\Folder as Folder;
-use \clearos\apps\samba\Samba as Samba;
-
-clearos_load_library('base/Folder');
-clearos_load_library('samba/Samba');
-
-// Exceptions
-//-----------
-
-use \Exception as Exception;
+clearos_load_library('samba_common/Samba');
 
 ///////////////////////////////////////////////////////////////////////////////
 // M A I N
 ///////////////////////////////////////////////////////////////////////////////
 
-$home_basename = '/home';
-$home_perms = '0700';
+//--------------------------------------------------------------------
+// Command line options
+//--------------------------------------------------------------------
 
-try {
-    $samba = new Samba();
-    $mode = $samba->get_mode();
+$short_options  = '';
+$short_options .= 'f';  // Force
 
-    if ($mode === Samba::MODE_AD_CONNECTOR)
-        $home_group = 'domain users';
-    else
-        $home_group = 'allusers';
+$options = getopt($short_options);
 
-	$user_manager = User_Manager::create();
-	$users = $user_manager->get_list();
+$force = isset($options['f']) ? TRUE : FALSE;
 
-    $folder = new Folder($home_basename);
-    $homes = $folder->get_listing(FALSE, FALSE);
+//--------------------------------------------------------------------
+// Initialization
+//--------------------------------------------------------------------
 
-    foreach ($users as $user) {
-        if (!in_array($user, $homes)) {
-            $home = new Folder($home_basename . '/' . $user);
-            $home->create($user, $home_group, $home_perms);
-            clearos_log('samba', 'created home directory: ' . $user);
-        }
-    }
-} catch (Exception $e) {
-	exit(1);
-}
-
-// vim: syntax=php ts=4
+$samba = new Samba();
+$samba->initialize($force);
