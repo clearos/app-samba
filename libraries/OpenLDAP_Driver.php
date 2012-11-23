@@ -76,9 +76,9 @@ use \clearos\apps\openldap_directory\Group_Manager_Driver as Group_Manager_Drive
 use \clearos\apps\openldap_directory\OpenLDAP as OpenLDAP;
 use \clearos\apps\openldap_directory\User_Manager_Driver as User_Manager_Driver;
 use \clearos\apps\samba\Nmbd as Nmbd;
-use \clearos\apps\samba\Samba as Samba;
 use \clearos\apps\samba\Smbd as Smbd;
 use \clearos\apps\samba\Winbind as Winbind;
+use \clearos\apps\samba_common\Samba as Samba;
 use \clearos\apps\users\User_Engine as User_Engine;
 
 clearos_load_library('base/Engine');
@@ -93,9 +93,9 @@ clearos_load_library('openldap_directory/Group_Manager_Driver');
 clearos_load_library('openldap_directory/OpenLDAP');
 clearos_load_library('openldap_directory/User_Manager_Driver');
 clearos_load_library('samba/Nmbd');
-clearos_load_library('samba/Samba');
 clearos_load_library('samba/Smbd');
 clearos_load_library('samba/Winbind');
+clearos_load_library('samba_common/Samba');
 clearos_load_library('users/User_Engine');
 
 // Exceptions
@@ -104,11 +104,11 @@ clearos_load_library('users/User_Engine');
 use \Exception as Exception;
 use \clearos\apps\base\Engine_Exception as Engine_Exception;
 use \clearos\apps\base\Validation_Exception as Validation_Exception;
-use \clearos\apps\samba\Samba_Not_Initialized_Exception as Samba_Not_Initialized_Exception;
+use \clearos\apps\samba_common\Samba_Not_Initialized_Exception as Samba_Not_Initialized_Exception;
 
 clearos_load_library('base/Engine_Exception');
 clearos_load_library('base/Validation_Exception');
-clearos_load_library('samba/Samba_Not_Initialized_Exception');
+clearos_load_library('samba_common/Samba_Not_Initialized_Exception');
 
 ///////////////////////////////////////////////////////////////////////////////
 // C L A S S
