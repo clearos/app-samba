@@ -41,9 +41,9 @@ require_once $bootstrap . '/bootstrap.php';
 // D E P E N D E N C I E S
 ///////////////////////////////////////////////////////////////////////////////
 
-use \clearos\apps\samba_common\Samba as Samba;
+use \clearos\apps\samba\OpenLDAP_Driver as OpenLDAP_Driver;
 
-clearos_load_library('samba_common/Samba');
+clearos_load_library('samba/OpenLDAP_Driver');
 
 ///////////////////////////////////////////////////////////////////////////////
 // M A I N
@@ -64,5 +64,5 @@ $force = isset($options['f']) ? TRUE : FALSE;
 // Initialization
 //--------------------------------------------------------------------
 
-$samba = new Samba();
-$samba->initialize($force);
+$samba_ldap = new OpenLDAP_Driver();
+$samba_ldap->initialize($force);

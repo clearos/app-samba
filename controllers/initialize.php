@@ -66,17 +66,18 @@ class Initialize extends ClearOS_Controller
         //---------------
 
         $this->lang->load('samba');
-        $this->load->library('samba/Samba');
+        $this->load->library('samba_common/Samba');
+        $this->load->library('samba/OpenLDAP_Driver');
 
         // Load view data
         //---------------
 
         try {
             // In some circumstances, Samba can auto-initialize.  Give it a try.
-            $this->samba->initialize();
+            $this->openldap_driver->initialize();
 
+            $is_blocked_slave = $this->openldap_driver->is_blocked_slave();
             $is_local_initialized = $this->samba->is_local_system_initialized();
-            $is_blocked_slave = $this->samba->is_blocked_slave();
             $is_initializing = $this->samba->is_initializing();
             $is_initialized = $this->samba->is_initialized();
         } catch (Exception $e) {
@@ -112,7 +113,8 @@ class Initialize extends ClearOS_Controller
         //---------------
 
         $this->lang->load('samba');
-        $this->load->library('samba/Samba');
+        $this->load->library('samba_common/Samba');
+        $this->load->library('samba/OpenLDAP_Driver');
         $this->load->factory('mode/Mode_Factory');
 
         // Handle form submit
@@ -126,12 +128,12 @@ class Initialize extends ClearOS_Controller
             $mode = $this->mode->get_mode();
 
             if ($mode === Mode_Engine::MODE_SLAVE) {
-                $this->samba->initialize_local_slave(
+                $this->openldap_driver->initialize_local_slave(
                     $this->input->post('netbios'),
                     $this->input->post('password')
                 );
             } else {
-                $this->samba->initialize_local_master_or_standalone(
+                $this->openldap_driver->initialize_local_master_or_standalone(
                     $this->input->post('netbios'),
                     $this->input->post('domain'),
                     $this->input->post('password')
@@ -158,18 +160,18 @@ class Initialize extends ClearOS_Controller
         //---------------
 
         $this->lang->load('samba');
-        $this->load->library('samba/Samba');
+        $this->load->library('samba_common/Samba');
         $this->load->factory('mode/Mode_Factory');
 
         // Set validation rules
         //---------------------
 
-        $this->form_validation->set_policy('netbios', 'samba/Samba', 'validate_netbios_name', TRUE);
-        $this->form_validation->set_policy('domain', 'samba/Samba', 'validate_workgroup', TRUE);
-        $this->form_validation->set_policy('password', 'samba/Samba', 'validate_password', TRUE);
+        $this->form_validation->set_policy('netbios', 'samba_common/Samba', 'validate_netbios_name', TRUE);
+        $this->form_validation->set_policy('domain', 'samba_common/Samba', 'validate_workgroup', TRUE);
+        $this->form_validation->set_policy('password', 'samba_common/Samba', 'validate_password', TRUE);
 
         if ($this->mode->get_mode() !== Mode_Engine::MODE_SLAVE)
-            $this->form_validation->set_policy('verify', 'samba/Samba', 'validate_password', TRUE);
+            $this->form_validation->set_policy('verify', 'samba_common/Samba', 'validate_password', TRUE);
 
         $form_ok = $this->form_validation->run();
 

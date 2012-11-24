@@ -69,7 +69,7 @@ class Samba extends ClearOS_Controller
         //---------------
 
         $this->lang->load('samba');
-        $this->load->library('samba/Samba');
+        $this->load->library('samba_common/Samba');
 
         // Load view data
         //---------------

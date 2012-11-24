@@ -52,9 +52,9 @@ clearos_load_library('samba/OpenLDAP_Driver');
 //-----------
 
 use \Exception as Exception;
-use \clearos\apps\samba\Samba_Not_Initialized_Exception as Samba_Not_Initialized_Exception;
+use \clearos\apps\samba_common\Samba_Not_Initialized_Exception as Samba_Not_Initialized_Exception;
 
-clearos_load_library('samba/Samba_Not_Initialized_Exception');
+clearos_load_library('samba_common/Samba_Not_Initialized_Exception');
 
 ///////////////////////////////////////////////////////////////////////////////
 // M A I N
@@ -63,9 +63,9 @@ clearos_load_library('samba/Samba_Not_Initialized_Exception');
 $samba = new OpenLDAP_Driver();
 
 try {
-	$samba->update_group_mappings();
+    $samba->update_group_mappings();
 } catch (Samba_Not_Initialized_Exception $e) {
-	// To be expected
+    // To be expected
 } catch (Exception $e) {
     clearos_log('samba', $e->GetMessage());
 }

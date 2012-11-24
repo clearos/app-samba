@@ -33,7 +33,7 @@
 // D E P E N D E N C I E S
 ///////////////////////////////////////////////////////////////////////////////
 
-use \clearos\apps\samba\Samba as Samba;
+use \clearos\apps\samba_common\Samba as Samba;
 
 ///////////////////////////////////////////////////////////////////////////////
 // C L A S S
@@ -100,13 +100,14 @@ class Administrator extends ClearOS_Controller
         //---------------
 
         $this->lang->load('samba');
-        $this->load->library('samba/Samba');
+        $this->load->library('samba_common/Samba');
+        $this->load->library('samba/OpenLDAP_Driver');
 
         // Set validation rules
         //---------------------
 
-        $this->form_validation->set_policy('password', 'samba/Samba', 'validate_password', TRUE);
-        $this->form_validation->set_policy('verify', 'samba/Samba', 'validate_password', TRUE);
+        $this->form_validation->set_policy('password', 'samba_common/Samba', 'validate_password', TRUE);
+        $this->form_validation->set_policy('verify', 'samba_common/Samba', 'validate_password', TRUE);
 
         $form_ok = $this->form_validation->run();
 
@@ -125,7 +126,7 @@ class Administrator extends ClearOS_Controller
 
         if (($this->input->post('submit') && $form_ok)) {
             try {
-                $this->samba->set_administrator_password($this->input->post('password'));
+                $this->openldap_driver->set_administrator_password($this->input->post('password'));
 
                 $this->page->set_status_updated();
                 redirect('/samba/administrator');

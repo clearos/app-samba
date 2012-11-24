@@ -33,7 +33,7 @@
 // D E P E N D E N C I E S
 ///////////////////////////////////////////////////////////////////////////////
 
-use \clearos\apps\samba\Samba as Samba;
+use \clearos\apps\samba_common\Samba as Samba;
 use \clearos\apps\mode\Mode_Engine as Mode_Engine;
 use \Exception as Exception;
 
@@ -103,17 +103,18 @@ class Mode extends ClearOS_Controller
 
         $this->lang->load('base');
         $this->lang->load('samba');
-        $this->load->library('samba/Samba');
+        $this->load->library('samba_common/Samba');
+        $this->load->library('samba/OpenLDAP_Driver');
         $this->load->factory('mode/Mode_Factory');
 
         // Set validation rules
         //---------------------
          
-        $this->form_validation->set_policy('mode', 'samba/Samba', 'validate_mode');
-        $this->form_validation->set_policy('domain', 'samba/Samba', 'validate_workgroup');
-        $this->form_validation->set_policy('profiles', 'samba/Samba', 'validate_roaming_profiles_state', TRUE);
-        $this->form_validation->set_policy('logon_drive', 'samba/Samba', 'validate_logon_drive', TRUE);
-        $this->form_validation->set_policy('logon_script', 'samba/Samba', 'validate_logon_script');
+        $this->form_validation->set_policy('mode', 'samba_common/Samba', 'validate_mode');
+        $this->form_validation->set_policy('domain', 'samba_common/Samba', 'validate_workgroup');
+        $this->form_validation->set_policy('profiles', 'samba_common/Samba', 'validate_roaming_profiles_state', TRUE);
+        $this->form_validation->set_policy('logon_drive', 'samba_common/Samba', 'validate_logon_drive', TRUE);
+        $this->form_validation->set_policy('logon_script', 'samba_common/Samba', 'validate_logon_script');
         $form_ok = $this->form_validation->run();
 
         // Handle form submit
@@ -130,7 +131,8 @@ class Mode extends ClearOS_Controller
                 }
 
                 $this->samba->set_mode($this->input->post('mode'));
-                $this->samba->set_workgroup($this->input->post('domain'));
+                // $this->samba->set_workgroup($this->input->post('domain'));
+                $this->openldap_driver->set_domain($this->input->post('domain'));
 
                 $this->page->set_status_updated();
                 redirect('/samba/mode');
@@ -146,7 +148,7 @@ class Mode extends ClearOS_Controller
         try {
             $data['form_type'] = $form_type;
             $data['mode'] = $this->samba->get_mode();
-            $data['domain'] = $this->samba->get_workgroup();
+            $data['domain'] = $this->openldap_driver->get_domain();
             $data['profiles'] = $this->samba->get_roaming_profiles_state();
             $data['logon_script'] = $this->samba->get_logon_script();
             $data['logon_drive'] = $this->samba->get_logon_drive();

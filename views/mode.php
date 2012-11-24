@@ -33,7 +33,7 @@
 // Load dependencies
 ///////////////////////////////////////////////////////////////////////////////
 
-use \clearos\apps\samba\Samba as Samba;
+use \clearos\apps\samba_common\Samba as Samba;
 
 $this->lang->load('base');
 $this->lang->load('samba');

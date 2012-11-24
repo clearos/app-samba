@@ -64,11 +64,15 @@ clearos_load_library('users/User_Manager_Factory');
 // Classes
 //--------
 
+use \clearos\apps\accounts\Accounts_Configuration as Accounts_Configuration;
 use \clearos\apps\base\Engine as Engine;
 use \clearos\apps\base\File as File;
 use \clearos\apps\base\Folder as Folder;
 use \clearos\apps\base\Shell as Shell;
 use \clearos\apps\ldap\LDAP_Utilities as LDAP_Utilities;
+use \clearos\apps\ldap\Nslcd as Nslcd;
+use \clearos\apps\mode\Mode_Engine as Mode_Engine;
+use \clearos\apps\mode\Mode_Factory as Mode_Factory;
 use \clearos\apps\openldap\LDAP_Driver as LDAP_Driver;
 use \clearos\apps\openldap_directory\Accounts_Driver as Accounts_Driver;
 use \clearos\apps\openldap_directory\Group_Driver as Group_Driver;
@@ -80,12 +84,17 @@ use \clearos\apps\samba\Smbd as Smbd;
 use \clearos\apps\samba\Winbind as Winbind;
 use \clearos\apps\samba_common\Samba as Samba;
 use \clearos\apps\users\User_Engine as User_Engine;
+use \clearos\apps\users\User_Factory as User_Factory;
 
+clearos_load_library('accounts/Accounts_Configuration');
 clearos_load_library('base/Engine');
 clearos_load_library('base/File');
 clearos_load_library('base/Folder');
 clearos_load_library('base/Shell');
 clearos_load_library('ldap/LDAP_Utilities');
+clearos_load_library('ldap/Nslcd');
+clearos_load_library('mode/Mode_Engine');
+clearos_load_library('mode/Mode_Factory');
 clearos_load_library('openldap/LDAP_Driver');
 clearos_load_library('openldap_directory/Accounts_Driver');
 clearos_load_library('openldap_directory/Group_Driver');
@@ -97,15 +106,18 @@ clearos_load_library('samba/Smbd');
 clearos_load_library('samba/Winbind');
 clearos_load_library('samba_common/Samba');
 clearos_load_library('users/User_Engine');
+clearos_load_library('users/User_Factory');
 
 // Exceptions
 //-----------
 
 use \Exception as Exception;
+use \clearos\apps\accounts\Accounts_Driver_Not_Set_Exception as Accounts_Driver_Not_Set_Exception;
 use \clearos\apps\base\Engine_Exception as Engine_Exception;
 use \clearos\apps\base\Validation_Exception as Validation_Exception;
 use \clearos\apps\samba_common\Samba_Not_Initialized_Exception as Samba_Not_Initialized_Exception;
 
+clearos_load_library('accounts/Accounts_Driver_Not_Set_Exception');
 clearos_load_library('base/Engine_Exception');
 clearos_load_library('base/Validation_Exception');
 clearos_load_library('samba_common/Samba_Not_Initialized_Exception');
@@ -132,8 +144,22 @@ class OpenLDAP_Driver extends Engine
     // C O N S T A N T S
     ///////////////////////////////////////////////////////////////////////////////
 
-    const FILE_INITIALIZED = '/var/clearos/samba/initialized_directory';
+    const FILE_INITIALIZED_DIRECTORY = '/var/clearos/samba/initialized_directory';
+    const FILE_INITIALIZED = '/var/clearos/samba/initialized';
+    const FILE_INITIALIZING = '/var/clearos/samba/lock/initializing';
+
+    const COMMAND_NET = '/usr/bin/net';
+    const COMMAND_SMBPASSWD = '/usr/bin/smbpasswd';
+
     const CACHE_FLAG_TIME = 60; // in seconds
+
+    const CONSTANT_WINADMIN_USERNAME = 'winadmin';
+    const CONSTANT_GUEST_CN = 'Guest Account';
+    const CONSTANT_GUEST_USERNAME = 'guest';
+    const CONSTANT_WINADMIN_CN = 'Windows Administrator';
+    const CONSTANT_GID_DOMAIN_COMPUTERS = '1000515';
+
+    const DEFAULT_ADMIN_PRIVS = 'SeMachineAccountPrivilege SePrintOperatorPrivilege SeAddUsersPrivilege SeDiskOperatorPrivilege SeMachineAccountPrivilege SeTakeOwnershipPrivilege';
 
     ///////////////////////////////////////////////////////////////////////////////
     // V A R I A B L E S
@@ -209,7 +235,7 @@ class OpenLDAP_Driver extends Engine
         $ldap_object['uid'] = $name;
         $ldap_object['description'] = lang('samba_computer') . ' ' . preg_replace('/\$$/', '', $name);
         $ldap_object['uidNumber'] = $accounts->get_next_uid_number();
-        $ldap_object['gidNumber'] = Samba::CONSTANT_GID_DOMAIN_COMPUTERS;
+        $ldap_object['gidNumber'] = self::CONSTANT_GID_DOMAIN_COMPUTERS;
         $ldap_object['homeDirectory'] = '/dev/null';
         $ldap_object['loginShell'] = '/sbin/nologin';
         $ldap_object['sambaSID'] = $domain_sid . '-' . $ldap_object['uidNumber'] ;
@@ -385,13 +411,355 @@ class OpenLDAP_Driver extends Engine
     }
 
     /**
+     * Initializes the local Samba system environment.
+     *
+     * @param string $netbios_  name netbios_name
+     * @param string $workgroup workgroup/Windows domain
+     * @param string $password  password for winadmin
+     *
+     * @return void
+     * @throws Engine_Exception, Samba_Not_Initialized_Exception
+     */
+
+    public function initialize_local_master_or_standalone($netbios, $workgroup, $password)
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        // Directory needs to be initialized
+        //----------------------------------
+
+        if (! $this->is_directory_initialized())
+            throw new Samba_Not_Initialized_Exception();
+
+        clearos_log('samba', 'initializing local Samba system');
+
+        // Lock state file
+        //----------------
+
+        $initializing_lock = fopen(Samba::FILE_LOCAL_INITIALIZING, 'w');
+
+        if (!flock($initializing_lock, LOCK_EX | LOCK_NB)) {
+            clearos_log('samba', 'local initialization is already running');
+            return;
+        }
+
+        // Set the winadmin password
+        //--------------------------
+
+        clearos_log('samba', 'setting winadmin password');
+
+        $user = User_Factory::create(self::CONSTANT_WINADMIN_USERNAME);
+        $user->reset_password($password, $password, self::CONSTANT_WINADMIN_USERNAME);
+
+        // Set default mode
+        //-----------------
+
+        $sysmode = Mode_Factory::create();
+        $mode = $sysmode->get_mode();
+
+        clearos_log('samba', "setting netbios name and workgroup: $netbios - $workgroup");
+
+        $samba = new Samba();
+
+        $samba->set_netbios_name($netbios);
+        $samba->set_workgroup($workgroup);
+
+        if (($mode === Mode_Engine::MODE_MASTER) || ($mode === Mode_Engine::MODE_STANDALONE)) {
+            clearos_log('samba', 'setting mode to PDC');
+            $samba->set_mode(Samba::MODE_PDC);
+        } else if ($mode === Mode_Engine::MODE_SLAVE) {
+            clearos_log('samba', 'setting mode to BDC');
+            $samba->set_mode(Samba::MODE_BDC);
+        }
+
+        // Save the LDAP an Idmap passwords
+        //---------------------------------
+
+        clearos_log('samba', 'storing LDAP credentials');
+
+        $this->_save_bind_password();
+        $this->_save_idmap_password();
+
+        // Net calls for privs an joining system to domain
+        // Note: Samba needs to be running for the next steps
+        //---------------------------------------------------
+
+        clearos_log('samba', 'starting Samba services for net calls');
+
+        $nmbd = new Nmbd();
+        $smbd = new Smbd();
+        $winbind = new Winbind();
+        $nslcd = new Nslcd();
+
+        // Do a hard reset on Nslcd (brutal)
+        if ($nslcd->is_installed()) {
+            if ($nslcd->get_running_state())
+                $nslcd->restart();
+            else
+                $nslcd->set_running_state(TRUE);
+        }
+
+        // Do a hard reset on Winbind
+        if ($winbind->get_running_state())
+            $winbind->restart();
+        else
+            $winbind->set_running_state(TRUE);
+
+        $nmbd->set_running_state(TRUE);
+
+        try {
+            $smbd->set_running_state(TRUE);
+        } catch (Exception $e) {
+            // Not the end of the world, can fail if LDAP is not quite ready
+        }
+
+        $nmbd->set_boot_state(TRUE);
+        $smbd->set_boot_state(TRUE);
+        $winbind->set_boot_state(TRUE);
+
+        // Grant default privileges to winadmin et al
+        //-------------------------------------------
+
+        clearos_log('samba', 'granting privileges for domain_users');
+
+        $this->_net_grant_default_privileges($password);
+
+        // Join the local system to itself
+        //--------------------------------
+
+        clearos_log('samba', 'joining system to the domain');
+
+        $this->_net_rpc_join($password);
+
+        // Update local file permissions
+        //------------------------------
+
+        $samba->update_local_file_permissions();
+
+        // Set the local system initialized flag
+        //--------------------------------------
+
+        clearos_log('samba', 'finished local initialization');
+
+        $samba->set_local_system_initialized(TRUE);
+
+        // Cleanup LDAP
+        //-------------
+
+        try {
+            if ($samba->get_mode() === Samba::MODE_PDC)
+                $this->cleanup_entries();
+        } catch (Exception $e) {
+            // Not fatal
+        }
+
+        // Cleanup file / file lock
+        //-------------------------
+
+        flock($initializing_lock, LOCK_UN);
+        fclose($initializing_lock);
+
+        $file = new File(Samba::FILE_LOCAL_INITIALIZING);
+
+        if ($file->exists())
+            $file->delete();
+    }
+
+    /**
+     * Initializes the local Samba system environment on a slave.
+     *
+     * @param string $netbios_  name netbios_name
+     * @param string $password  password for winadmin
+     *
+     * @return void
+     * @throws Engine_Exception, Samba_Not_Initialized_Exception
+     */
+
+    public function initialize_local_slave($netbios, $password)
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        // Run initialization again, but with Netbios name and password to join domain
+        //----------------------------------------------------------------------------
+
+        $this->initialize_slave_system($netbios, $password);
+
+        // Update local file permissions
+        //------------------------------
+
+        $samba = new Samba();
+        $samba->update_local_file_permissions();
+
+        // Set the local system initialized flag
+        //--------------------------------------
+
+        $samba->set_local_system_initialized(TRUE);
+    }
+
+    /**
+     * Initializes system using sane defaults.
+     *
+     * @param boolean $force    force initialization
+     *
+     * @return void
+     * @throws Engine_Exception
+     */
+
+    public function initialize($force = FALSE)
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        // Bail if initialized
+        //--------------------
+
+        $samba = new Samba();
+
+        if ($samba->is_initialized() && !$force)
+            return;
+
+        // Bail if driver not set
+        //-----------------------
+
+        try {
+            $accounts = new Accounts_Configuration();
+            $driver = $accounts->get_driver();
+        } catch (Accounts_Driver_Not_Set_Exception $e) {
+            return;
+        }
+
+        // Bail if slave, but master is not Samba-ready
+        //---------------------------------------------
+
+        $sysmode = Mode_Factory::create();
+        $mode = $sysmode->get_mode();
+
+        if (($mode === Mode_Engine::MODE_SLAVE) && !$this->is_directory_ready())
+            return;
+
+        // Lock state file
+        //----------------
+
+        $initializing_lock = fopen(self::FILE_INITIALIZING, 'w');
+
+        if (!flock($initializing_lock, LOCK_EX | LOCK_NB)) {
+            clearos_log('samba', 'initialization is already running');
+            return;
+        }
+
+        // Initialize Samba system
+        //------------------------
+
+        if ($driver === 'active_directory') {
+            $this->initialize_ad_system();
+        } else if (($mode === Mode_Engine::MODE_MASTER) || ($mode === Mode_Engine::MODE_STANDALONE)) {
+            $this->initialize_master_system('CLEARSYSTEM', NULL, $force);
+        } else if ($mode === Mode_Engine::MODE_SLAVE) {
+            $this->initialize_slave_system('BDC');
+        }
+
+        // Delete SID cache
+        //-----------------
+
+        $file = new File(Samba::FILE_DOMAIN_SID_CACHE);
+
+        if ($file->exists())
+            $file->delete();
+
+        // Start winbind, man
+        //-------------------
+
+        try {
+            clearos_log('samba', 'starting winbind');
+
+            $winbind = new Winbind();
+            $winbind->set_boot_state(TRUE);
+            $winbind->set_running_state(TRUE);
+        } catch (Exception $e) {
+            // Not fatal
+        }
+
+        // And scene
+        //----------
+
+        clearos_log('samba', 'finished initialization... whew');
+
+        $samba->set_initialized();
+
+        // Cleanup file / file lock
+        //-------------------------
+
+        flock($initializing_lock, LOCK_UN);
+        fclose($initializing_lock);
+
+        $file = new File(self::FILE_INITIALIZING);
+
+        if ($file->exists())
+            $file->delete();
+    }
+
+    /**
+     * Initializes AD node with the necessary Samba elements.
+     *
+     * @return void
+     * @throws Engine_Exception
+     */
+
+    public function initialize_ad_system()
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        clearos_log('samba', 'initializing AD mode');
+
+        // Start SMB and NMB
+        //------------------
+
+        clearos_log('samba', 'starting smb and nmb');
+
+        $nmbd = new Nmbd();
+        $smbd = new Smbd();
+        $samba = new Samba();
+
+        $nmbd->set_boot_state(TRUE);
+        $smbd->set_boot_state(TRUE);
+        $nmbd->set_running_state(TRUE);
+        $smbd->set_running_state(TRUE);
+
+        // We're done initialization in AD mode.
+        $samba->set_initialized();
+        $samba->set_local_system_initialized(TRUE);
+    }
+
+    /**
+     * Checks to see if slave node can be initialized.
+     *
+     * @return boolean TRUE if slave node cannot be initialized due to incomplete master
+     * @throws Engine_Exception
+     */
+
+    public function is_blocked_slave()
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        $sysmode = Mode_Factory::create();
+        $mode = $sysmode->get_mode();
+
+        if ($mode !== Mode_Engine::MODE_SLAVE)
+            return FALSE;
+
+        if ($this->is_directory_ready())
+            return FALSE;
+        else
+            return TRUE;
+    }
+
+    /**
      * Initializes master node with the necessary Samba elements.
      *
      * You do not need to have the server components of Samba installed
      * to run this initialization routine.  This simply initializes the
      * necessary bits to get LDAP up and running.
      *
-     * @param stringa $domain   workgroup / domain
+     * @param string  $domain   workgroup / domain
      * @param string  $password password for winadmin
      * @param boolean $force    force initialization
      *
@@ -403,11 +771,26 @@ class OpenLDAP_Driver extends Engine
     {
         clearos_profile(__METHOD__, __LINE__);
 
+        // Bail if already initialized
+        //----------------------------
+
         if ($this->is_directory_initialized() && !$force)
             return;
 
+        // Bail if we are not a master/standalone system
+        //----------------------------------------------
+
+        $sysmode = Mode_Factory::create();
+        $mode = $sysmode->get_mode();
+
+        if (($mode !== Mode_Engine::MODE_MASTER) && ($mode !== Mode_Engine::MODE_STANDALONE))
+            throw new Engine_Exception(lang('samba_system_not_in_master_mode'));
+
+        clearos_log('samba', 'initializing master/standalone LDAP');
+
         // Shutdown Samba daemons if they are installed/running
-        $samba = new Samba(); 
+        //-----------------------------------------------------
+
         $nmbd = new Nmbd();
         $smbd = new Smbd();
         $winbind = new Winbind();
@@ -441,11 +824,19 @@ class OpenLDAP_Driver extends Engine
         }
 
         // Archive the files (usually in /var/lib/samba)
+        //----------------------------------------------
+
         clearos_log('samba', 'archiving old state files');
+
         $this->_archive_state_files();
 
         // Set Samba
+        //----------
+
         clearos_log('samba', 'configuring smb.conf');
+
+        $samba = new Samba(); 
+
         $samba->set_mode(Samba::MODE_PDC);
         $samba->set_workgroup($domain);
         $samba->set_password_servers(array());
@@ -454,25 +845,37 @@ class OpenLDAP_Driver extends Engine
         $samba->set_default_idmap_backend('ldap');
 
         // Bootstrap the domain SID
+        //-------------------------
+
         clearos_log('samba', 'initializing SIDs');
         $domainsid = $this->_initialize_domain_sid();
 
         // Set local SID to be the same as domain SID
+        //-------------------------------------------
+
         $this->_initialize_local_sid($domainsid);
 
         // Implant all the Samba elements into LDAP
+        //-----------------------------------------
+
         $this->_initialize_ldap($domainsid, $password);
 
-        // Groups
+        // Managed groups
+        //---------------
+
         $this->_initialize_windows_groups($domainsid);
         $this->_initialize_group_memberships($domainsid);
         $this->update_group_mappings($domainsid);
 
         // Save the LDAP password into secrets
+        //------------------------------------
+
         clearos_log('samba', 'storing LDAP credentials');
-        $samba->_save_bind_password();
+        $this->_save_bind_password();
 
         // Restart Samba if it was running 
+        //--------------------------------
+
         if ($nmbd_was_running)
             $nmbd->set_running_state(TRUE);
 
@@ -483,6 +886,8 @@ class OpenLDAP_Driver extends Engine
             $winbind->set_running_state(TRUE);
 
         // For good measure, update local file permissions
+        //------------------------------------------------
+
         try {
             $samba->update_local_file_permissions();
         } catch (Engine_Exception $e) {
@@ -490,25 +895,114 @@ class OpenLDAP_Driver extends Engine
         }
 
         // Flag to indicate directory has been initialized
+        //------------------------------------------------
+
         clearos_log('samba', 'finished directory initialization');
-        $file = new File(self::FILE_INITIALIZED);
+
+        $file = new File(self::FILE_INITIALIZED_DIRECTORY);
 
         if (! $file->exists())
             $file->create('root', 'root', '0644');
+
+        // Handle Samba configuration and post cleanup
+        //--------------------------------------------
+
+        $this->_update_secrets();
     }
 
     /**
      * Initializes slave node with the necessary Samba elements.
      *
+     * @param string $netbios  NetBIOS name
+     * @param string $password password for winadmin
+     *
      * @return void
      * @throws Engine_Exception
      */
 
-    public function initialize_slave_system()
+    public function initialize_slave_system($netbios, $password = NULL)
     {
         clearos_profile(__METHOD__, __LINE__);
 
-        $file = new File(self::FILE_INITIALIZED);
+        clearos_log('samba', 'initializing slave mode');
+
+        // Bail if we are not a slave system
+        //----------------------------------
+
+        $sysmode = Mode_Factory::create();
+        $mode = $sysmode->get_mode();
+
+        if ($mode !== Mode_Engine::MODE_SLAVE)
+            throw new Engine_Exception('samba_system_not_in_slave_mode');
+
+        // Validation
+        //-----------
+
+        Validation_Exception::is_valid($this->validate_netbios_name($netbios));
+
+        if (! is_null($password))
+            Validation_Exception::is_valid($this->validate_password($password));
+
+        // Set BDC defaults
+        //-----------------
+
+        clearos_log('samba', 'configuring smb.conf');
+
+        $workgroup = $this->get_domain();
+
+        $master = $sysmode->get_master_hostname();
+
+        $samba = new Samba();
+
+        $samba->set_mode(Samba::MODE_BDC);
+        $samba->set_netbios_name($netbios);
+        $samba->set_workgroup($workgroup);
+        $samba->set_wins_server_and_support($master, FALSE);
+
+        $this->_update_secrets();
+
+        clearos_log('samba', 'starting up Samba services');
+
+        $nmbd = new Nmbd();
+        $smbd = new Smbd();
+        $winbind = new Winbind();
+        $nslcd = new Nslcd();
+
+        $nmbd->set_boot_state(TRUE);
+        $smbd->set_boot_state(TRUE);
+        $winbind->set_boot_state(TRUE);
+
+        try {
+            // Do a hard reset on Nslcd (brutal)
+            if ($nslcd->is_installed()) {
+                if ($nslcd->get_running_state())
+                    $nslcd->restart();
+                else
+                    $nslcd->set_running_state(TRUE);
+            }
+
+            $nmbd->set_running_state(TRUE);
+            $smbd->set_running_state(TRUE);
+            if ($winbind->get_running_state())
+                $winbind->restart();
+            else
+                $winbind->set_running_state(TRUE);
+        } catch (Exception $e) {
+            // Not the end of the world 
+        }
+
+        // Join system to domain
+        //----------------------
+
+        if (! is_null($password)) {
+            clearos_log('samba', 'joining system to the domain');
+            $this->_net_rpc_join($password, $master);
+        }
+
+        // Set initialized flag
+        //---------------------
+
+        $file = new File(self::FILE_INITIALIZED_DIRECTORY);
 
         if (! $file->exists())
             $file->create('root', 'root', '0644');
@@ -525,7 +1019,7 @@ class OpenLDAP_Driver extends Engine
     {
         clearos_profile(__METHOD__, __LINE__);
 
-        $file = new File(self::FILE_INITIALIZED);
+        $file = new File(self::FILE_INITIALIZED_DIRECTORY);
 
         if ($file->exists())
             return TRUE;
@@ -623,6 +1117,43 @@ class OpenLDAP_Driver extends Engine
     }
 
     /**
+     * Sets administrator passord.
+     *
+     * @param string $password
+     *
+     * @return void
+     * @throws Validation_Exception, Engine_Exception
+     */
+
+    public function set_administrator_password($password)
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        $user = User_Factory::create(self::CONSTANT_WINADMIN_USERNAME);
+        $user->reset_password($password, $password, self::CONSTANT_WINADMIN_USERNAME);
+
+        // Rejoin for good measure (hard time getting net rpc join to run consistently)
+        //-----------------------------------------------------------------------------
+
+        $samba = new Samba();
+
+        if ($samba->get_mode() === Samba::MODE_PDC)
+            $this->add_computer($samba->get_netbios_name());
+
+        $this->_net_rpc_join($password);
+
+        // Cleanup LDAP
+        //-------------
+
+        try {
+            if ($samba->get_mode() === Samba::MODE_PDC)
+                $this->cleanup_entries();
+        } catch (Exception $e) {
+            // Not fatal
+        }
+    }
+
+    /**
      * Sets workgroup/domain name LDAP objects.
      *
      * @param string $workgroup workgroup name
@@ -631,15 +1162,38 @@ class OpenLDAP_Driver extends Engine
      * @throws Validation_Exception, Engine_Exception
      */
 
-    public function set_workgroup($workgroup)
+    public function set_domain($workgroup)
     {
         clearos_profile(__METHOD__, __LINE__);
+
+        Validation_Exception::is_valid($this->validate_workgroup($workgroup));
+
+        // Bail if directory is not initialized
+        //-------------------------------------
 
         if (! $this->is_directory_initialized())
             return;
 
         if ($this->ldaph == NULL)
             $this->_get_ldap_handle();
+
+        // Bail if not a master/standalone node
+        //-------------------------------------
+
+        $sysmode = Mode_Factory::create();
+        $mode = $sysmode->get_mode();
+
+        if (! (($mode === Mode_Engine::MODE_MASTER) || ($mode === Mode_Engine::MODE_STANDALONE)))
+            return;
+
+        // Expensive call, only do it on a change
+        //---------------------------------------
+
+        $workgroup = strtoupper($workgroup);
+        $current_workgroup = $this->get_domain();
+
+        if ($workgroup == $current_workgroup)
+            return;
 
         // Update sambaDomainName object
         //------------------------------
@@ -688,6 +1242,17 @@ class OpenLDAP_Driver extends Engine
             $this->ldaph->modify('cn=' . $attributes['cn'][0] . "," . $users_container , $newattrs);
             $entry = $this->ldaph->next_entry($entry);
         }
+
+        // Update Samba configuration
+        //---------------------------
+
+        $samba = new Samba();
+        $samba->set_workgroup($workgroup);
+
+        // Clean up secrets file
+        //----------------------
+
+        $this->_update_secrets();
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -708,6 +1273,61 @@ class OpenLDAP_Driver extends Engine
 
         if (! preg_match('/^([a-zA-Z0-9_\-\.]+)\$$/', $computer))
             return lang('samba_computer_invalid') . " " . $computer; // FIXME
+    }
+
+    /**
+     * Validation routine for netbios name.
+     *
+     * @param string $netbios_name system name
+     *
+     * @return string error message if netbios name is invalid
+     */
+
+    public function validate_netbios_name($netbios_name)
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        $samba = new Samba();
+
+        return $samba->validate_netbios_name($netbios_name);
+    }
+
+    /**
+     * Validation routine for password.
+     *
+     * @param string $password password
+     *
+     * @return string error message if password is invalid
+     */
+
+    public function validate_password($password)
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        $samba = new Samba();
+
+        return $samba->validate_password($password);
+    }
+
+    /**
+     * Validation routine for workgroup
+     *
+     * To avoid issues on Windows networks:
+     * - the netbios_name and workgroup must be different
+     * - the host nickname (left-side of the hostname) must not match the workgroup
+     *
+     * @param  string  $workgroup  workgroup name
+     *
+     * @return  boolean  TRUE if workgroup is valid
+     */
+
+    public function validate_workgroup($workgroup)
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        $samba = new Samba();
+
+        return $samba->validate_workgroup($workgroup);
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -1121,7 +1741,7 @@ class OpenLDAP_Driver extends Engine
 
         $users_container = OpenLDAP::get_users_container();
 
-        $winadmin_dn = 'cn=' . Samba::CONSTANT_WINADMIN_CN . ',' . $users_container;
+        $winadmin_dn = 'cn=' . self::CONSTANT_WINADMIN_CN . ',' . $users_container;
 
         $userinfo[$winadmin_dn]['lastName'] = 'Administrator';
         $userinfo[$winadmin_dn]['firstName'] = 'Windows';
@@ -1153,7 +1773,7 @@ class OpenLDAP_Driver extends Engine
         $users[$winadmin_dn]['sambaAcctFlags'] = '[U       ]';
         $users[$winadmin_dn]['sambaSID'] = $domainsid . '-500';
 
-        $guest_dn = 'cn=' . Samba::CONSTANT_GUEST_CN . ',' . $users_container;
+        $guest_dn = 'cn=' . self::CONSTANT_GUEST_CN . ',' . $users_container;
 
         $users[$guest_dn]['objectClass'] = array(
             'top',
@@ -1254,7 +1874,7 @@ class OpenLDAP_Driver extends Engine
         $groups[$group]['extensions']['samba']['group_type'] = 2;
         $groups[$group]['extensions']['samba']['display_name'] = 'Domain Admins';
         $groups[$group]['extensions']['mail']['distribution_list'] = 0;
-        $groups[$group]['members'] = array(Samba::CONSTANT_WINADMIN_USERNAME);
+        $groups[$group]['members'] = array(self::CONSTANT_WINADMIN_USERNAME);
 
         $group = 'domain_users';
         $groups[$group]['core']['description'] = 'Domain Users';
@@ -1271,11 +1891,11 @@ class OpenLDAP_Driver extends Engine
         $groups[$group]['extensions']['samba']['group_type'] = 2;
         $groups[$group]['extensions']['mail']['distribution_list'] = 0;
         $groups[$group]['extensions']['samba']['display_name'] = 'Domain Guests';
-        $groups[$group]['members'] = array(Samba::CONSTANT_GUEST_USERNAME);
+        $groups[$group]['members'] = array(self::CONSTANT_GUEST_USERNAME);
 
         $group = 'domain_computers';
         $groups[$group]['core']['description'] = 'Domain Computers';
-        $groups[$group]['core']['gid_number'] = Samba::CONSTANT_GID_DOMAIN_COMPUTERS;
+        $groups[$group]['core']['gid_number'] = self::CONSTANT_GID_DOMAIN_COMPUTERS;
         $groups[$group]['extensions']['samba']['sid'] = $domainsid . '-515';
         $groups[$group]['extensions']['samba']['group_type'] = 2;
         $groups[$group]['extensions']['samba']['display_name'] = 'Domain Computers';
@@ -1379,5 +1999,239 @@ class OpenLDAP_Driver extends Engine
                 $group->set_members($group_info['members']);
             }
         }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // P R I V A T E   M E T H O D S
+    ///////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Cleans up the secrets file.
+     *
+     * @return void
+     * @throws Engine_Exception
+     */
+
+    protected function _update_secrets()
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        // In AD mode, we're done
+
+        $samba = new Samba();
+
+        if ($samba->get_mode() === Samba::MODE_AD_CONNECTOR)
+            return;
+
+        if (! $this->is_directory_initialized())
+            return;
+
+        $nmbd = new Nmbd();
+        $smbd = new Smbd();
+        $winbind = new Winbind();
+
+        $nmbd_wasrunning = FALSE;
+        $smbd_wasrunning = FALSE;
+        $winbind_wasrunning = FALSE;
+
+        if ($winbind->is_installed()) {
+            $winbind_wasrunning = $winbind->get_running_state();
+            if ($winbind_wasrunning)
+                $winbind->set_running_state(FALSE);
+        }
+
+        if ($smbd->is_installed()) {
+            $smbd_wasrunning = $smbd->get_running_state();
+            if ($smbd_wasrunning)
+                $smbd->set_running_state(FALSE);
+        }
+
+        if ($nmbd->is_installed()) {
+            $nmbd_wasrunning = $nmbd->get_running_state();
+            if ($nmbd_wasrunning)
+                $nmbd->set_running_state(FALSE);
+        }
+
+        $this->_save_bind_password();
+        $this->_save_idmap_password();
+
+        $samba->set_domain_sid();
+        $samba->set_local_sid();
+
+        if ($nmbd_wasrunning)
+            $nmbd->set_running_state(TRUE);
+
+        if ($smbd_wasrunning)
+            $smbd->set_running_state(TRUE);
+
+        if ($winbind_wasrunning)
+            $winbind->set_running_state(TRUE);
+    }
+
+    /**
+     * Saves LDAP bind password to Samba secrets file.
+     *
+     * @access private
+     *
+     * @return void
+     * @throws Engine_Exception
+     */
+
+    protected function _save_bind_password()
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        $bind_password = $this->get_bind_password();
+
+        // Use pipe to avoid showing password in command line
+        $options['stdin'] = TRUE;
+
+        $shell = new Shell();
+        $shell->execute(self::COMMAND_SMBPASSWD, "-w " . $bind_password, TRUE, $options);
+    }
+
+    /**
+     * Saves password required for Idmap.
+     *
+     * @access private
+     *
+     * @return void
+     * @throws Engine_Exception
+     */
+
+    protected function _save_idmap_password()
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        $password = $this->get_bind_password();
+        $options['stdin'] = TRUE;
+
+        $shell = new Shell();
+        $exitcode = $shell->Execute(self::COMMAND_NET, "idmap secret '*' $password", TRUE, $options);
+    }
+
+    /**
+     * Grants default privileges for the system.
+     *
+     * @access private
+     * @param string $password password for winadmin
+     *
+     * @return void
+     * @throws Engine_Exception
+     */
+
+    protected function _net_grant_default_privileges($password, $target = '127.0.0.1')
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        $samba = new Samba();
+
+        $domain = $samba->get_workgroup();
+        $options['stdin'] = TRUE;
+        $net_error = '';
+
+        $shell = new Shell();
+        $options['validate_exit_code'] = FALSE;
+
+        for ($i = 0; $i < 10; $i++) {
+            sleep(2); // wait or daemons to start, not atomic
+
+            try {
+                $retval = $shell->execute(self::COMMAND_NET, 'rpc rights grant "' . $domain . '\Domain Admins" ' .
+                    self::DEFAULT_ADMIN_PRIVS . ' -I ' . $target . ' -U winadmin%' . $password, TRUE, $options);
+
+                if ($retval == 0) {
+                    $net_error = '';
+                    break;
+                } else {
+                    $net_error = $shell->get_last_output_line();
+                    clearos_log('samba', 'waiting for net rpc rights response');
+                }
+            } catch (Engine_Exception $e) {
+                $net_error = clearos_exception_message($e);
+                clearos_log('samba', 'stilll waiting for net rpc rights response');
+            }
+        }
+
+        if (! empty($net_error))
+            throw new Engine_Exception($net_error);
+    }
+
+    /**
+     * Runs net rpc join command.
+     *
+     * @param string $password winadmin password
+     *
+     * @access private
+     * @return void
+     * @throws Engine_Exception
+     */
+
+    protected function _net_rpc_join($password, $target = '127.0.0.1')
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        $nmbd = new Nmbd();
+        $smbd = new Smbd();
+        $winbind = new Winbind();
+        $samba = new Samba();
+
+        $nmbd_wasrunning = FALSE;
+        $smbd_wasrunning = FALSE;
+        $winbind_wasrunning = FALSE;
+
+        if ($winbind->is_installed()) {
+            $winbind_wasrunning = $winbind->get_running_state();
+            if (! $winbind_wasrunning)
+                $winbind->set_running_state(TRUE);
+        }
+
+        if ($nmbd->is_installed()) {
+            $nmbd_wasrunning = $nmbd->get_running_state();
+            if (! $nmbd_wasrunning)
+                $nmbd->set_running_state(TRUE);
+        }
+
+        if ($smbd->is_installed()) {
+            $smbd_wasrunning = $smbd->get_running_state();
+            if (! $smbd_wasrunning)
+                $smbd->set_running_state(TRUE);
+        }
+
+        $netbios_name = $samba->get_netbios_name();
+
+        $shell = new Shell();
+
+        $options['stdin'] = TRUE;
+        $options['validate_exit_code'] = FALSE;
+
+        for ($inx = 1; $inx < 10; $inx++) {
+            try {
+                sleep(2);
+                $retval = $shell->execute(self::COMMAND_NET, 'rpc join -S ' .$netbios_name .
+                    ' -I ' . $target .  ' -U winadmin%' . $password, TRUE, $options);
+                if ($retval == 0) {
+                    $succeeded = TRUE;
+                    break;
+                } else {
+                    clearos_log('samba', 'waiting for net rpc join response');
+                }
+            } catch (Exception $e) {
+                // Try again
+                clearos_log('samba', 'still waiting for net rpc join response');
+            }
+        }
+
+        // TODO: Not the end of the world.
+        // if (! $succeeded)
+
+        if (! $smbd_wasrunning)
+            $smbd->set_running_state(FALSE);
+
+        if (!$nmbd_wasrunning)
+            $nmbd->set_running_state(FALSE);
+
+        if (!$winbind_wasrunning)
+            $winbind->set_running_state(FALSE);
     }
 }

@@ -33,7 +33,7 @@
 // D E P E N D E N C I E S
 ///////////////////////////////////////////////////////////////////////////////
 
-use \clearos\apps\samba\Samba as Samba;
+use \clearos\apps\samba_common\Samba as Samba;
 
 ///////////////////////////////////////////////////////////////////////////////
 // C L A S S
@@ -101,19 +101,19 @@ class Settings extends ClearOS_Controller
 
         $this->lang->load('base');
         $this->lang->load('samba');
-        $this->load->library('samba/Samba');
+        $this->load->library('samba_common/Samba');
 
         // Set validation rules
         //---------------------
          
-        $this->form_validation->set_policy('netbios', 'samba/Samba', 'validate_netbios_name', TRUE);
-        $this->form_validation->set_policy('comment', 'samba/Samba', 'validate_server_string', TRUE);
-        $this->form_validation->set_policy('homes', 'samba/Samba', 'validate_homes_state', TRUE);
-        $this->form_validation->set_policy('wins_support', 'samba/Samba', 'validate_wins_support');
-        $this->form_validation->set_policy('wins_server', 'samba/Samba', 'validate_wins_server');
+        $this->form_validation->set_policy('netbios', 'samba_common/Samba', 'validate_netbios_name', TRUE);
+        $this->form_validation->set_policy('comment', 'samba_common/Samba', 'validate_server_string', TRUE);
+        $this->form_validation->set_policy('homes', 'samba_common/Samba', 'validate_homes_state', TRUE);
+        $this->form_validation->set_policy('wins_support', 'samba_common/Samba', 'validate_wins_support');
+        $this->form_validation->set_policy('wins_server', 'samba_common/Samba', 'validate_wins_server');
 
         if ($this->input->post('printing'))
-            $this->form_validation->set_policy('printing', 'samba/Samba', 'validate_server_string', TRUE);
+            $this->form_validation->set_policy('printing', 'samba_common/Samba', 'validate_server_string', TRUE);
 
         $form_ok = $this->form_validation->run();
 
@@ -122,6 +122,7 @@ class Settings extends ClearOS_Controller
 
         if (($this->input->post('submit') && $form_ok)) {
             try {
+                // FIXME: review setting netbios -- is add/delete computer required?  a rejoin?
                 $this->samba->set_netbios_name($this->input->post('netbios'));
                 $this->samba->set_server_string($this->input->post('comment'));
                 $this->samba->set_printing_mode($this->input->post('printing'));

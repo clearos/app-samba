@@ -33,7 +33,7 @@
 // D E P E N D E N C I E S
 ///////////////////////////////////////////////////////////////////////////////
 
-use \clearos\apps\samba\Samba as Samba;
+use \clearos\apps\samba_common\Samba as Samba;
 
 ///////////////////////////////////////////////////////////////////////////////
 // C L A S S
@@ -66,7 +66,7 @@ class Computers extends ClearOS_Controller
 
         $this->lang->load('samba');
         $this->load->library('samba/Computer');
-        $this->load->library('samba/Samba');
+        $this->load->library('samba_common/Samba');
 
         // Load view data
         //---------------

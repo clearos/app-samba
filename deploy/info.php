@@ -80,10 +80,6 @@ $app['core_file_manifest'] = array(
         'target' => '/usr/sbin/samba-add-machine',
         'mode' => '0755',
     ),
-    'samba-homes' => array(
-        'target' => '/usr/sbin/samba-homes',
-        'mode' => '0755',
-    ),
     'samba-init' => array(
         'target' => '/usr/sbin/samba-init',
         'mode' => '0755',
