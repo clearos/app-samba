@@ -52,6 +52,7 @@ clearos_load_language('samba');
 // D E P E N D E N C I E S
 ///////////////////////////////////////////////////////////////////////////////
 
+
 // Factories
 //----------
 
@@ -74,15 +75,15 @@ use \clearos\apps\ldap\Nslcd as Nslcd;
 use \clearos\apps\mode\Mode_Engine as Mode_Engine;
 use \clearos\apps\mode\Mode_Factory as Mode_Factory;
 use \clearos\apps\openldap\LDAP_Driver as LDAP_Driver;
-use \clearos\apps\openldap_directory\Accounts_Driver as Accounts_Driver;
 use \clearos\apps\openldap_directory\Group_Driver as Group_Driver;
 use \clearos\apps\openldap_directory\Group_Manager_Driver as Group_Manager_Driver;
 use \clearos\apps\openldap_directory\OpenLDAP as OpenLDAP;
 use \clearos\apps\openldap_directory\User_Manager_Driver as User_Manager_Driver;
-use \clearos\apps\samba\Nmbd as Nmbd;
-use \clearos\apps\samba\Smbd as Smbd;
-use \clearos\apps\samba\Winbind as Winbind;
+use \clearos\apps\samba_common\Nmbd as Nmbd;
 use \clearos\apps\samba_common\Samba as Samba;
+use \clearos\apps\samba_common\Smbd as Smbd;
+use \clearos\apps\samba_common\Winbind as Winbind;
+use \clearos\apps\samba_directory\Accounts_Driver as Accounts_Driver;
 use \clearos\apps\users\User_Engine as User_Engine;
 use \clearos\apps\users\User_Factory as User_Factory;
 
@@ -96,15 +97,15 @@ clearos_load_library('ldap/Nslcd');
 clearos_load_library('mode/Mode_Engine');
 clearos_load_library('mode/Mode_Factory');
 clearos_load_library('openldap/LDAP_Driver');
-clearos_load_library('openldap_directory/Accounts_Driver');
 clearos_load_library('openldap_directory/Group_Driver');
 clearos_load_library('openldap_directory/Group_Manager_Driver');
 clearos_load_library('openldap_directory/OpenLDAP');
 clearos_load_library('openldap_directory/User_Manager_Driver');
-clearos_load_library('samba/Nmbd');
-clearos_load_library('samba/Smbd');
-clearos_load_library('samba/Winbind');
+clearos_load_library('samba_common/Nmbd');
 clearos_load_library('samba_common/Samba');
+clearos_load_library('samba_common/Smbd');
+clearos_load_library('samba_common/Winbind');
+clearos_load_library('samba_directory/Accounts_Driver');
 clearos_load_library('users/User_Engine');
 clearos_load_library('users/User_Factory');
 
@@ -649,13 +650,12 @@ class OpenLDAP_Driver extends Engine
         // Initialize Samba system
         //------------------------
 
-        if ($driver === 'active_directory') {
-            $this->initialize_ad_system();
-        } else if (($mode === Mode_Engine::MODE_MASTER) || ($mode === Mode_Engine::MODE_STANDALONE)) {
+        if (($mode === Mode_Engine::MODE_MASTER) || ($mode === Mode_Engine::MODE_STANDALONE))
             $this->initialize_master_system('CLEARSYSTEM', NULL, $force);
-        } else if ($mode === Mode_Engine::MODE_SLAVE) {
+        else if ($mode === Mode_Engine::MODE_SLAVE)
             $this->initialize_slave_system('BDC');
-        }
+        else
+            return;
 
         // Delete SID cache
         //-----------------
@@ -695,38 +695,6 @@ class OpenLDAP_Driver extends Engine
 
         if ($file->exists())
             $file->delete();
-    }
-
-    /**
-     * Initializes AD node with the necessary Samba elements.
-     *
-     * @return void
-     * @throws Engine_Exception
-     */
-
-    public function initialize_ad_system()
-    {
-        clearos_profile(__METHOD__, __LINE__);
-
-        clearos_log('samba', 'initializing AD mode');
-
-        // Start SMB and NMB
-        //------------------
-
-        clearos_log('samba', 'starting smb and nmb');
-
-        $nmbd = new Nmbd();
-        $smbd = new Smbd();
-        $samba = new Samba();
-
-        $nmbd->set_boot_state(TRUE);
-        $smbd->set_boot_state(TRUE);
-        $nmbd->set_running_state(TRUE);
-        $smbd->set_running_state(TRUE);
-
-        // We're done initialization in AD mode.
-        $samba->set_initialized();
-        $samba->set_local_system_initialized(TRUE);
     }
 
     /**
