@@ -85,7 +85,7 @@ class Samba extends ClearOS_Controller
         //-----------
 
         if ($is_initialized) {
-            $views = array('samba/settings', 'samba/mode', 'samba/administrator', 'samba/computers');
+            $views = array('samba/server', 'samba/settings', 'samba/mode', 'samba/administrator', 'samba/computers');
 
             $this->page->view_forms($views, lang('samba_app_name'));
         } else {
