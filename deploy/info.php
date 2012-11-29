@@ -12,6 +12,7 @@ $app['packager'] = 'ClearFoundation';
 $app['license'] = 'GPLv3';
 $app['license_core'] = 'LGPLv3';
 $app['description'] = lang('samba_app_description');
+$app['tooltip'] = lang('samba_file_share_tooltip');
 
 /////////////////////////////////////////////////////////////////////////////
 // App name and categories

@@ -127,3 +127,4 @@ $lang['samba_wins_support_setting_invalid'] = 'WINS support setting is invalid.'
 $lang['samba_wins_support'] = 'WINS Support';
 $lang['samba_workgroup'] = 'Workgroup';
 $lang['samba_writable'] = 'Writable';
+$lang['samba_file_share_tooltip'] = 'If you would like to create network file shares, please use the Flexshare app.';
