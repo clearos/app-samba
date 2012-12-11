@@ -47,6 +47,7 @@ require_once $bootstrap . '/bootstrap.php';
 ///////////////////////////////////////////////////////////////////////////////
 
 clearos_load_language('samba');
+clearos_load_language('samba_common');
 
 ///////////////////////////////////////////////////////////////////////////////
 // D E P E N D E N C I E S
@@ -186,6 +187,6 @@ class Computer extends Engine
         clearos_profile(__METHOD__, __LINE__);
 
         if (! preg_match('/^([a-zA-Z0-9_\-\.]+)\$$/', $name))
-            return lang('samba_computer_name_is_invalid');
+            return lang('samba_common_computer_name_invalid');
     }
 }

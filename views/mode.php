@@ -37,6 +37,7 @@ use \clearos\apps\samba_common\Samba as Samba;
 
 $this->lang->load('base');
 $this->lang->load('samba');
+$this->lang->load('samba_common');
 
 ///////////////////////////////////////////////////////////////////////////////
 // Form handler
@@ -68,25 +69,25 @@ if ($ad_mode || ($mode == Samba::MODE_BDC))
 ///////////////////////////////////////////////////////////////////////////////
 
 if ($should_be_pdc_warning) {
-    echo infobox_warning(lang('base_warning'), lang('samba_master_node_should_be_pdc'));
+    echo infobox_warning(lang('base_warning'), lang('samba_common_master_node_should_be_pdc'));
     return;
 } else if ($should_be_bdc_warning) {
-    echo infobox_warning(lang('base_warning'), lang('samba_slave_node_should_be_bdc'));
+    echo infobox_warning(lang('base_warning'), lang('samba_common_slave_node_should_be_bdc'));
     return;
 } else if ($unsupported_bdc_warning) {
-    echo infobox_warning(lang('base_warning'), lang('samba_bdc_only_supported_on_slave_systems'));
+    echo infobox_warning(lang('base_warning'), lang('samba_common_bdc_only_supported_on_slave_systems'));
     return;
 }
 
 echo form_open('samba/mode/edit');
-echo form_header(lang('samba_mode'));
+echo form_header(lang('samba_common_mode'));
 
-echo field_dropdown('mode', $modes, $mode, lang('samba_mode'), $mode_read_only);
-echo field_input('domain', $domain, lang('samba_windows_domain'), $domain_read_only);
+echo field_dropdown('mode', $modes, $mode, lang('samba_common_mode'), $mode_read_only);
+echo field_input('domain', $domain, lang('samba_common_windows_domain'), $domain_read_only);
 
-echo field_toggle_enable_disable('profiles', $profiles, lang('samba_roaming_profiles'), $read_only);
-echo field_simple_dropdown('logon_drive', $logon_drives, $logon_drive, lang('samba_logon_drive'), $read_only);
-echo field_input('logon_script', $logon_script, lang('samba_logon_script'), $read_only);
+echo field_toggle_enable_disable('profiles', $profiles, lang('samba_common_roaming_profiles'), $read_only);
+echo field_simple_dropdown('logon_drive', $logon_drives, $logon_drive, lang('samba_common_logon_drive'), $read_only);
+echo field_input('logon_script', $logon_script, lang('samba_common_logon_script'), $read_only);
 
 echo field_button_set($buttons);
 

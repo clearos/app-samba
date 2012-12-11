@@ -35,18 +35,19 @@
 
 $this->lang->load('base');
 $this->lang->load('samba');
+$this->lang->load('samba_common');
 
 ///////////////////////////////////////////////////////////////////////////////
 // Form handler
 ///////////////////////////////////////////////////////////////////////////////
 
 if ($mode === 'slave') {
-    $help = lang('samba_initialize_slave_help');
-    $title = lang('samba_initialize_bdc');
-    $button_text = lang('samba_join_domain');
+    $help = lang('samba_common_initialize_slave_help');
+    $title = lang('samba_common_initialize_bdc');
+    $button_text = lang('samba_common_join_domain');
     $domain_read_only = TRUE;
 } else {
-    $help = lang('samba_initialize_master_help');
+    $help = lang('samba_common_initialize_master_help');
     $title = lang('base_initialize');
     $button_text = lang('base_initialize');
     $domain_read_only = FALSE;
@@ -78,13 +79,13 @@ echo "<input type='hidden' id='init_validated' value='$validated'>";
 echo form_open('samba/initialize/edit');
 echo form_header($title);
 
-echo fieldset_header(lang('samba_windows_network'));
-echo field_input('netbios', $netbios, lang('samba_server_name'));
-echo field_input('domain', $domain, lang('samba_windows_domain'), $domain_read_only);
+echo fieldset_header(lang('samba_common_windows_network'));
+echo field_input('netbios', $netbios, lang('samba_common_server_name'));
+echo field_input('domain', $domain, lang('samba_common_windows_domain'), $domain_read_only);
 echo fieldset_footer();
 
-echo fieldset_header(lang('samba_administrator_password'));
-echo field_input('administrator', $administrator, lang('samba_account_username'), TRUE);
+echo fieldset_header(lang('samba_common_administrator_password'));
+echo field_input('administrator', $administrator, lang('samba_common_account_username'), TRUE);
 echo field_password('password', '', lang('base_password'));
 if ($mode !== 'slave')
     echo field_password('verify', '', lang('base_verify'));

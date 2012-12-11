@@ -103,6 +103,7 @@ class Mode extends ClearOS_Controller
 
         $this->lang->load('base');
         $this->lang->load('samba');
+        $this->lang->load('samba_common');
         $this->load->library('samba_common/Samba');
         $this->load->library('samba/OpenLDAP_Driver');
         $this->load->factory('mode/Mode_Factory');
@@ -157,16 +158,16 @@ class Mode extends ClearOS_Controller
             );
 
             $master_modes = array(
-                Samba::MODE_PDC => lang('samba_pdc'),
-                Samba::MODE_SIMPLE_SERVER => lang('samba_simple_server')
+                Samba::MODE_PDC => lang('samba_common_pdc'),
+                Samba::MODE_SIMPLE_SERVER => lang('samba_common_simple_server')
             );
 
             $slave_modes = array(
-                Samba::MODE_BDC => lang('samba_bdc'),
+                Samba::MODE_BDC => lang('samba_common_bdc'),
             );
 
             $ad_modes = array(
-                Samba::MODE_AD_CONNECTOR => lang('samba_active_directory_connector'),
+                Samba::MODE_AD_CONNECTOR => lang('samba_common_active_directory_connector'),
             );
 
             $server_mode = $this->mode->get_mode();
@@ -205,6 +206,6 @@ class Mode extends ClearOS_Controller
         // Load views
         //-----------
 
-        $this->page->view_form('samba/mode', $data, lang('samba_mode'));
+        $this->page->view_form('samba/mode', $data, lang('samba_common_mode'));
     }
 }

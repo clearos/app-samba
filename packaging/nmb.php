@@ -11,14 +11,14 @@ require_once $bootstrap . '/bootstrap.php';
 // T R A N S L A T I O N S
 ///////////////////////////////////////////////////////////////////////////////
 
-clearos_load_language('samba');
+clearos_load_language('samba_common');
 
 ///////////////////////////////////////////////////////////////////////////////
 // C O N F I G L E T
 ///////////////////////////////////////////////////////////////////////////////
 
 $configlet = array(
-	'title' => lang('samba_netbios_server'),
+	'title' => lang('samba_common_netbios_server'),
 	'package' => 'samba',
 	'process_name' => 'nmbd',
 	'pid_file' => '/var/run/nmbd.pid',

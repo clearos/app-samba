@@ -35,6 +35,7 @@
 
 $this->lang->load('base');
 $this->lang->load('samba');
+$this->lang->load('samba_common');
 
 ///////////////////////////////////////////////////////////////////////////////
 // Form handler
@@ -42,12 +43,12 @@ $this->lang->load('samba');
 
 if ($form_type === 'edit') {
     $buttons = array(
-        form_submit_custom('submit', lang('samba_change_password')),
+        form_submit_custom('submit', lang('samba_common_change_password')),
         anchor_cancel('/app/samba/administrator')
     );
 } else {
     $buttons = array(
-        anchor_custom('/app/samba/administrator/edit', lang('samba_change_password')),
+        anchor_custom('/app/samba/administrator/edit', lang('samba_common_change_password')),
     );
 }
 
@@ -56,9 +57,9 @@ if ($form_type === 'edit') {
 ///////////////////////////////////////////////////////////////////////////////
 
 echo form_open('samba/administrator/edit');
-echo form_header(lang('samba_administrator_account'));
+echo form_header(lang('samba_common_administrator_account'));
 
-echo field_input('administrator', $administrator, lang('samba_account_username'), TRUE);
+echo field_input('administrator', $administrator, lang('samba_common_account_username'), TRUE);
 
 if ($form_type == 'edit')  {
     echo field_password('password', '', lang('base_password'));

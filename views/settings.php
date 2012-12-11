@@ -35,6 +35,7 @@
 
 $this->lang->load('base');
 $this->lang->load('samba');
+$this->lang->load('samba_common');
 
 ///////////////////////////////////////////////////////////////////////////////
 // Form handler
@@ -66,13 +67,13 @@ if ($ad_mode) {
 echo form_open('samba/settings/edit');
 echo form_header(lang('base_settings'));
 
-echo field_input('netbios', $netbios, lang('samba_server_name'), $netbios_read_only);
-echo field_input('comment', $comment, lang('samba_server_comment'), $read_only);
+echo field_input('netbios', $netbios, lang('samba_common_server_name'), $netbios_read_only);
+echo field_input('comment', $comment, lang('samba_common_server_comment'), $read_only);
 if ($show_printing)
-    echo field_dropdown('printing', $printing_options, $printing, lang('samba_printing'), $read_only);
-echo field_toggle_enable_disable('homes', $homes, lang('samba_home_directories'), $read_only);
-echo field_toggle_enable_disable('wins_support', $wins_support, lang('samba_wins_support'), $read_only);
-echo field_input('wins_server', $wins_server, lang('samba_wins_server'), $read_only);
+    echo field_dropdown('printing', $printing_options, $printing, lang('samba_common_printing'), $read_only);
+echo field_toggle_enable_disable('homes', $homes, lang('samba_common_home_directories'), $read_only);
+echo field_toggle_enable_disable('wins_support', $wins_support, lang('samba_common_wins_support'), $read_only);
+echo field_input('wins_server', $wins_server, lang('samba_common_wins_server'), $read_only);
 
 echo field_button_set($buttons);
 
@@ -85,8 +86,8 @@ echo form_close();
 
 if ($ad_mode && ($form_type === 'edit')) {
     echo infobox_highlight(
-        lang('samba_active_directory_connector_mode'),
-        lang('samba_active_directory_connector_mode_help') . 
-        "<p align='center'>" . anchor_custom('/app/active_directory/edit', lang('samba_reconnect_to_active_directory'))
+        lang('samba_common_active_directory_connector_mode'),
+        lang('samba_common_active_directory_connector_mode_help') . 
+        "<p align='center'>" . anchor_custom('/app/active_directory/edit', lang('samba_common_reconnect_to_active_directory'))
     );
 }

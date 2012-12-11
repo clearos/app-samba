@@ -36,6 +36,6 @@
 $this->lang->load('samba');
 
 if ($initializing)
-    echo infobox_highlight(lang('base_status'), lang('samba_not_finished_initializing_yet'));
+    echo infobox_highlight(lang('base_status'), lang('samba_common_not_finished_initializing_yet'));
 else
-    echo infobox_highlight(lang('base_status'), lang('samba_master_node_needs_initialization'));
+    echo infobox_highlight(lang('base_status'), lang('samba_common_master_node_needs_initialization'));

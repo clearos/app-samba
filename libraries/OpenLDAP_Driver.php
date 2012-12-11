@@ -47,6 +47,7 @@ require_once $bootstrap . '/bootstrap.php';
 ///////////////////////////////////////////////////////////////////////////////
 
 clearos_load_language('samba');
+clearos_load_language('samba_common');
 
 ///////////////////////////////////////////////////////////////////////////////
 // D E P E N D E N C I E S
@@ -234,7 +235,7 @@ class OpenLDAP_Driver extends Engine
 
         $ldap_object['cn'] = $name;
         $ldap_object['uid'] = $name;
-        $ldap_object['description'] = lang('samba_computer') . ' ' . preg_replace('/\$$/', '', $name);
+        $ldap_object['description'] = lang('samba_common_computer') . ' ' . preg_replace('/\$$/', '', $name);
         $ldap_object['uidNumber'] = $accounts->get_next_uid_number();
         $ldap_object['gidNumber'] = self::CONSTANT_GID_DOMAIN_COMPUTERS;
         $ldap_object['homeDirectory'] = '/dev/null';
@@ -370,7 +371,7 @@ class OpenLDAP_Driver extends Engine
             $attributes = $this->ldaph->get_attributes($entry);
             $sid = $attributes['sambaSID'][0];
         } else {
-            throw new Engine_Exception(lang('samba_domain_name_missing_in_ldap'));
+            throw new Engine_Exception(lang('samba_common_domain_name_missing_in_ldap'));
         }
 
         return $sid;
@@ -405,7 +406,7 @@ class OpenLDAP_Driver extends Engine
             $attributes = $this->ldaph->get_attributes($entry);
             $domain = $attributes['sambaDomainName'][0];
         } else {
-            throw new Engine_Exception(lang('samba_domain_name_missing_in_ldap'));
+            throw new Engine_Exception(lang('samba_common_domain_name_missing_in_ldap'));
         }
 
         return $domain;
@@ -752,7 +753,7 @@ class OpenLDAP_Driver extends Engine
         $mode = $sysmode->get_mode();
 
         if (($mode !== Mode_Engine::MODE_MASTER) && ($mode !== Mode_Engine::MODE_STANDALONE))
-            throw new Engine_Exception(lang('samba_system_not_in_master_mode'));
+            throw new Engine_Exception(lang('samba_common_system_not_in_master_mode'));
 
         clearos_log('samba', 'initializing master/standalone LDAP');
 
@@ -1240,7 +1241,7 @@ class OpenLDAP_Driver extends Engine
         clearos_profile(__METHOD__, __LINE__);
 
         if (! preg_match('/^([a-zA-Z0-9_\-\.]+)\$$/', $computer))
-            return lang('samba_computer_invalid') . " " . $computer; // FIXME
+            return lang('samba_common_computer_invalid') . " " . $computer; // FIXME
     }
 
     /**
