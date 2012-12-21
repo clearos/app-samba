@@ -33,8 +33,12 @@ Requires: app-openldap-directory-core
 Requires: app-samba-extension-core >= 1:1.4.10
 Requires: app-samba-common-core >= 1:1.4.10
 Requires: csplugin-filewatch
+Requires: libtalloc
+Requires: samba >= 3.6.1
+Requires: samba-common >= 3.6.1
 Requires: samba-client >= 3.6.1
 Requires: samba-winbind >= 3.6.1
+Requires: samba-winbind-clients >= 3.6.1
 Requires: system-mode-driver
 Requires: tdb-tools >= 1.2.9
 

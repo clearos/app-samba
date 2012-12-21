@@ -48,6 +48,8 @@ $app['requires'] = array(
     'samba >= 3.6.1',
 );
 
+// Note: explicit libtalloc and samba-common dependencies make yum happy
+// when it distinguishes between Samba 3 and Samba 4.
 $app['core_requires'] = array(
     'app-accounts-core',
     'app-groups-core',
@@ -57,8 +59,12 @@ $app['core_requires'] = array(
     'app-samba-extension-core >= 1:1.4.10',
     'app-samba-common-core >= 1:1.4.10',
     'csplugin-filewatch',
+    'libtalloc',
+    'samba >= 3.6.1',
+    'samba-common >= 3.6.1',
     'samba-client >= 3.6.1',
     'samba-winbind >= 3.6.1',
+    'samba-winbind-clients >= 3.6.1',
     'system-mode-driver',
     'tdb-tools >= 1.2.9'
 );
