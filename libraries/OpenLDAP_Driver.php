@@ -920,6 +920,32 @@ class OpenLDAP_Driver extends Engine
     }
 
     /**
+     * Initializes the Samba system environment.
+     *
+     * @param string  $netbios_  name netbios_name
+     * @param string  $password  password for winadmin
+     * @param boolean $force     force initialization
+     *
+     * @return void
+     * @throws Engine_Exception, Samba_Not_Initialized_Exception
+     */
+
+    public function run_initialize_samba_as_slave($netbios, $password, $force = FALSE)
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        Validation_Exception::is_valid($this->validate_netbios_name($netbios));
+        Validation_Exception::is_valid($this->validate_password($password));
+
+        $options['background'] = TRUE;
+
+        $force = ($force) ? '-f' : '';
+
+        $shell = new Shell();
+        $shell->execute(self::COMMAND_SAMBA_INITIALIZE, "-n '$netbios' -p '$password' $force", TRUE, $options);
+    }
+
+    /**
      * Updates existing groups with Windows Networking group information (mapping).
      *
      * The ClearOS directory is designed to work without the Windows Networking
