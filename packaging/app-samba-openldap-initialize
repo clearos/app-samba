@@ -101,4 +101,14 @@ try {
 // Handle command line options
 //--------------------------------------------------------------------
 
-$openldap->initialize($force);
+// Dirty - try it twice
+try {
+    $openldap->initialize($force);
+} catch (Exception $e) {
+    // Try again
+}
+
+if (! $openldap->is_initialized()) {
+    sleep(15);
+    $openldap->initialize($force);
+}

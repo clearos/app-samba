@@ -52,7 +52,7 @@ fi
 #---------------------------------------
 
 if [ "$1" == "configuration_change_event" ]; then
-    if [ -e /var/clearos/samba/initialized ]; then
+    if [ -e /var/clearos/samba_common/initialized ]; then
         set +e
         update_interfaces_config
         /usr/clearos/apps/samba/deploy/cleanup-ldap
@@ -71,16 +71,16 @@ if [ "$1" == "configuration_change_event" ]; then
 #---------------------------------------
 
 elif [ "$1" == "directory_online_event" ]; then
-    if ( [ ! -e /var/clearos/samba/initialized ] && [ -e /var/clearos/accounts/initialized ] ); then
+    if ( [ ! -e /var/clearos/samba/initialized_openldap ] && [ -e /var/clearos/accounts/initialized ] ); then
         logger -p local6.notice -t clearsync "samba - checking Samba directory initialization"
         ( flock -x -n 200
             logger -p local6.notice -t clearsync "samba - initializing Samba directory"
-            [ -x /usr/sbin/samba-init ] && /usr/sbin/samba-init >/dev/null 2>&1
+            [ -x /usr/sbin/app-samba-openldap-initialize ] && /usr/sbin/app-samba-openldap-initialize >/dev/null 2>&1
         ) 200>/var/tmp/samba-init
     fi
 
     # TODO: overkill - needs to be successful once
-    if [ -e /var/clearos/samba/initialized ]; then
+    if [ -e /var/clearos/samba_common/initialized ]; then
         [ -x /usr/sbin/add-windows-group-info ] && /usr/sbin/add-windows-group-info >/dev/null 2>&1
         [ -x /usr/sbin/password-policies-synchronize ] && /usr/sbin/password-policies-synchronize >/dev/null 2>&1
     fi
