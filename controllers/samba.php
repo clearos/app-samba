@@ -75,7 +75,7 @@ class Samba extends ClearOS_Controller
         //---------------
 
         try {
-            $is_initialized = $this->samba->is_local_system_initialized();
+            $is_initialized = $this->samba->is_initialized();
         } catch (Exception $e) {
             $this->page->view_exception($e);
             return;
@@ -89,7 +89,7 @@ class Samba extends ClearOS_Controller
 
             $this->page->view_forms($views, lang('samba_app_name'));
         } else {
-            redirect('/samba/initialize');
+            redirect('/samba/initialization');
         }
     }
 }

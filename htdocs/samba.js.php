@@ -41,6 +41,7 @@ require_once $bootstrap . '/bootstrap.php';
 ///////////////////////////////////////////////////////////////////////////////
 
 clearos_load_language('base');
+clearos_load_language('samba');
 
 ///////////////////////////////////////////////////////////////////////////////
 // J A V A S C R I P T
@@ -54,7 +55,10 @@ $(document).ready(function() {
     // Translations
     //-------------
 
-    lang_initializing = '<?php echo lang("base_initializing..."); ?>';
+    lang_samba_initializing = '<?php echo lang("samba_initializing_warning"); ?>';
+    lang_initializing = '<?php echo lang("samba_initializing_core_system"); ?>';
+    lang_connecting = '<?php echo lang("base_connecting..."); ?>';
+    lang_blocked_slave = '<?php echo lang("samba_master_node_needs_initialization"); ?>';
 
     // Mode field handling
     //--------------------
@@ -62,6 +66,8 @@ $(document).ready(function() {
     $('#profiles_field').hide();
     $('#logon_drive_field').hide();
     $('#logon_script_field').hide();
+    $("#configuration").hide();
+    $("#initialization").hide();
 
     changeMode();
 
@@ -93,21 +99,18 @@ $(document).ready(function() {
                 '&domain=' + $("#domain").val() +
                 '&password=' + $("#password").val()
             ,
-            url: '/app/samba/initialize/run',
+            url: '/app/samba/initialization/run',
             success: function(payload) {
-                if (payload.code == 0) {
-                    window.location.href = '/app/samba';
-                } else {
-                    $("#initialization_result").html(payload.error_message);
-                    $("#configuration").show();
-                }
             },
             error: function() {
             }
         });
-    } else {
-        $("#configuration").show();
+
+        getInitializationStatus();
+    } else if ($("#init_validated").val() == 0) {
+        getInitializationStatus();
     }
+
 });
 
 function changeMode() {
@@ -131,6 +134,68 @@ function changeWins() {
         $('#wins_server').attr('disabled', true);
     } else {
         $('#wins_server').attr('disabled', false);
+    }
+}
+
+function getInitializationStatus() {
+    $.ajax({
+        url: '/app/samba/initialization/get_status',
+        type: 'GET',
+        dataType: 'json',
+        success : function(payload) {
+            window.setTimeout(getInitializationStatus, 2000);
+            showInitializationStatus(payload);
+        },
+        error: function (XMLHttpRequest, textStatus, errorThrown) {
+            window.setTimeout(getInitializationStatus, 2000);
+        }
+    });
+}
+
+function runDirectoryInitialization() {
+    $.ajax({
+        url: '/app/samba/initialization/run_openldap_initialization',
+        type: 'GET',
+        dataType: 'json',
+        success : function(payload) {
+        },
+        error: function (XMLHttpRequest, textStatus, errorThrown) {
+        }
+    });
+}
+
+function showInitializationStatus(payload) {
+    if (payload.status == 'samba_initialized') {
+        $("#configuration").hide();
+        $("#initialization").hide();
+        window.location.href = '/app/samba';
+    } else if (payload.status == 'samba_initializing') {
+        $("#initialization_result").html('<div class="theme-loading-normal">' + lang_samba_initializing + '</div>');
+        $("#configuration").hide();
+        $("#initialization").show();
+    } else if (payload.status == 'initializing') {
+        $("#initialization_result").html('<div class="theme-loading-normal">' + lang_initializing + '</div>');
+        $("#configuration").hide();
+        $("#initialization").show();
+    } else if (payload.status == 'initialized') {
+        if ($("#init_validated").val() == 0) {
+            $("#initialization_result").html('');
+            $("#configuration").show();
+            $("#initialization").hide();
+        } else {
+            $("#initialization_result").html('<div class="theme-loading-normal">' + lang_connecting + '</div>');
+            $("#configuration").hide();
+            $("#initialization").show();
+        }
+    } else if (payload.status == 'blocked_slave') {
+        $("#initialization_result").html('<div class="theme-loading-normal">' + lang_blocked_slave + '</div>');
+        $("#configuration").hide();
+        $("#initialization").show();
+    } else if (payload.status == 'uninitialized') {
+        $("#initialization_result").html('<div class="theme-loading-normal">' + lang_connecting + '</div>');
+        $("#configuration").hide();
+        $("#initialization").show();
+        runDirectoryInitialization(); 
     }
 }
 

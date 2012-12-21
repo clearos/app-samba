@@ -5,7 +5,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 $app['basename'] = 'samba';
-$app['version'] = '1.4.8';
+$app['version'] = '1.4.10';
 $app['release'] = '1';
 $app['vendor'] = 'ClearFoundation';
 $app['packager'] = 'ClearFoundation';
@@ -54,8 +54,8 @@ $app['core_requires'] = array(
     'app-users-core >= 1:1.1.1',
     'app-network-core', 
     'app-openldap-directory-core', 
-    'app-samba-extension-core',
-    'app-samba-common-core >= 1:1.4.8',
+    'app-samba-extension-core >= 1:1.4.10',
+    'app-samba-common-core >= 1:1.4.10',
     'csplugin-filewatch',
     'samba-client >= 3.6.1',
     'samba-winbind >= 3.6.1',
@@ -81,8 +81,12 @@ $app['core_file_manifest'] = array(
         'target' => '/usr/sbin/samba-add-machine',
         'mode' => '0755',
     ),
-    'samba-init' => array(
-        'target' => '/usr/sbin/samba-init',
+    'app-samba-openldap-initialize' => array(
+        'target' => '/usr/sbin/app-samba-openldap-initialize',
+        'mode' => '0755',
+    ),
+    'app-samba-initialize' => array(
+        'target' => '/usr/sbin/app-samba-initialize',
         'mode' => '0755',
     ),
     'nmb.php'=> array('target' => '/var/clearos/base/daemon/nmb.php'),

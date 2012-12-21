@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Samba password policy engine.
+ * Samba OpenLDAP not initialized exception class.
  *
  * @category   Apps
  * @package    Samba
- * @subpackage Libraries
+ * @subpackage Exceptions
  * @author     ClearFoundation <developer@clearfoundation.com>
- * @copyright  2010-2011 ClearFoundation
+ * @copyright  2012 ClearFoundation
  * @license    http://www.gnu.org/copyleft/lgpl.html GNU Lesser General Public License version 3 or later
  * @link       http://www.clearfoundation.com/docs/developer/apps/samba/
  */
@@ -46,98 +46,40 @@ require_once $bootstrap . '/bootstrap.php';
 // T R A N S L A T I O N S
 ///////////////////////////////////////////////////////////////////////////////
 
-clearos_load_language('base');
+clearos_load_language('samba');
 
 ///////////////////////////////////////////////////////////////////////////////
 // D E P E N D E N C I E S
 ///////////////////////////////////////////////////////////////////////////////
 
-use \clearos\apps\base\Engine as Engine;
-use \clearos\apps\openldap\LDAP_Driver as LDAP_Driver;
-use \clearos\apps\openldap_directory\OpenLDAP as OpenLDAP;
-use \clearos\apps\samba\OpenLDAP_Driver as OpenLDAP_Driver;
-use \clearos\apps\samba_common\Samba as Samba;
+use \clearos\apps\base\Engine_Exception as Engine_Exception;
 
-clearos_load_library('base/Engine');
-clearos_load_library('openldap/LDAP_Driver');
-clearos_load_library('openldap_directory/OpenLDAP');
-clearos_load_library('samba/OpenLDAP_Driver');
-clearos_load_library('samba_common/Samba');
+clearos_load_library('base/Engine_Exception');
 
 ///////////////////////////////////////////////////////////////////////////////
 // C L A S S
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * Samba password policy engine.
+ * Samba OpenLDAP not initialized exception class.
  *
  * @category   Apps
  * @package    Samba
- * @subpackage Libraries
+ * @subpackage Exceptions
  * @author     ClearFoundation <developer@clearfoundation.com>
- * @copyright  2010-2011 ClearFoundation
+ * @copyright  2012 ClearFoundation
  * @license    http://www.gnu.org/copyleft/lgpl.html GNU Lesser General Public License version 3 or later
  * @link       http://www.clearfoundation.com/docs/developer/apps/samba/
  */
 
-class Samba_Password_Policy extends Engine
+class OpenLDAP_Driver_Not_Initialized extends Engine_Exception
 {
-    ///////////////////////////////////////////////////////////////////////////////
-    // V A R I A B L E S
-    ///////////////////////////////////////////////////////////////////////////////
-
-    const CONSTANT_LOCKOUT_FOREVER = -1;
-    const CONSTANT_MODIFY_ANY_TIME = 0;
-    const CONSTANT_NO_HISTORY = 0;
-    const CONSTANT_NO_EXPIRE = -1;
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // M E T H O D S
-    ///////////////////////////////////////////////////////////////////////////////
-
     /**
-     * Password policy engine constructor.
-     *
-     * @return void
+     * Samba driver not initialized constructor.
      */
 
     public function __construct()
     {
-        clearos_profile(__METHOD__, __LINE__);
-    }
-
-    /**
-     * Sets default password policies.
-     *
-     * The following settings are currently supported:
-     * - sambaPwdHistoryLength
-     * - sambaMaxPwdAge
-     * - sambaMinPwdAge
-     * - sambaMinPwdLength
-     * 
-     * @param array $settings settings object
-     *
-     * @return void
-     * @throws Engine_Exception
-     */
-
-    public function set_default_policy($settings)
-    {
-        clearos_profile(__METHOD__, __LINE__);
-
-        $samba_ldap = new OpenLDAP_Driver();
-
-        if (!$samba_ldap->is_initialized())
-            return;
-
-        $samba = new Samba();
-        $ldap = new LDAP_Driver();
-
-        $ldaph = $ldap->get_ldap_handle();
-        $workgroup = $samba->get_workgroup();
-
-        $dn = 'sambaDomainName=' . $workgroup . ',' .  OpenLDAP::get_base_dn();
-
-        $ldaph->modify($dn, $settings);
+        parent::__construct(lang('samba_driver_has_not_been_initialized'), CLEAROS_INFO);
     }
 }

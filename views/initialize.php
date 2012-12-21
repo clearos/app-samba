@@ -53,12 +53,9 @@ if ($mode === 'slave') {
     $domain_read_only = FALSE;
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // Status boxes
 ///////////////////////////////////////////////////////////////////////////////
-
-echo infobox_highlight(lang('base_getting_started'), $help);
 
 echo "<div id='initialization' style='display:none;'>";
 
@@ -74,9 +71,12 @@ echo "</div>";
 ///////////////////////////////////////////////////////////////////////////////
 
 echo "<div id='configuration' style='display:none;'>";
+
+echo infobox_highlight(lang('base_getting_started'), $help);
+
 echo "<input type='hidden' id='init_validated' value='$validated'>";
 
-echo form_open('samba/initialize/edit');
+echo form_open('samba/initialization/edit');
 echo form_header($title);
 
 echo fieldset_header(lang('samba_common_windows_network'));

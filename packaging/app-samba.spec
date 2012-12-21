@@ -1,7 +1,7 @@
 
 Name: app-samba
 Epoch: 1
-Version: 1.4.8
+Version: 1.4.10
 Release: 1%{dist}
 Summary: Windows Networking
 License: GPLv3
@@ -56,12 +56,13 @@ install -d -m 0755 %{buildroot}/var/clearos/samba/backup
 install -d -m 0775 %{buildroot}/var/clearos/samba/lock
 install -D -m 0755 packaging/add-samba-directories %{buildroot}/usr/sbin/add-samba-directories
 install -D -m 0755 packaging/add-windows-group-info %{buildroot}/usr/sbin/add-windows-group-info
+install -D -m 0755 packaging/app-samba-initialize %{buildroot}/usr/sbin/app-samba-initialize
+install -D -m 0755 packaging/app-samba-openldap-initialize %{buildroot}/usr/sbin/app-samba-openldap-initialize
 install -D -m 0644 packaging/filewatch-samba-configuration.conf %{buildroot}/etc/clearsync.d/filewatch-samba-configuration.conf
 install -D -m 0644 packaging/filewatch-samba-directory.conf %{buildroot}/etc/clearsync.d/filewatch-samba-directory.conf
 install -D -m 0644 packaging/filewatch-samba-network.conf %{buildroot}/etc/clearsync.d/filewatch-samba-network.conf
 install -D -m 0644 packaging/nmb.php %{buildroot}/var/clearos/base/daemon/nmb.php
 install -D -m 0755 packaging/samba-add-machine %{buildroot}/usr/sbin/samba-add-machine
-install -D -m 0755 packaging/samba-init %{buildroot}/usr/sbin/samba-init
 install -D -m 0644 packaging/smb.ldap.conf %{buildroot}/var/clearos/ldap/synchronize/smb.ldap.conf
 install -D -m 0644 packaging/smb.php %{buildroot}/var/clearos/base/daemon/smb.php
 install -D -m 0644 packaging/smb.winbind.conf %{buildroot}/var/clearos/ldap/synchronize/smb.winbind.conf
@@ -113,12 +114,13 @@ exit 0
 /usr/clearos/apps/samba/libraries
 /usr/sbin/add-samba-directories
 /usr/sbin/add-windows-group-info
+/usr/sbin/app-samba-initialize
+/usr/sbin/app-samba-openldap-initialize
 /etc/clearsync.d/filewatch-samba-configuration.conf
 /etc/clearsync.d/filewatch-samba-directory.conf
 /etc/clearsync.d/filewatch-samba-network.conf
 /var/clearos/base/daemon/nmb.php
 /usr/sbin/samba-add-machine
-/usr/sbin/samba-init
 /var/clearos/ldap/synchronize/smb.ldap.conf
 /var/clearos/base/daemon/smb.php
 /var/clearos/ldap/synchronize/smb.winbind.conf

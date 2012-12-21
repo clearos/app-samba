@@ -6,6 +6,17 @@
 /usr/sbin/addsudo /usr/bin/net app-samba-core
 /usr/sbin/addsudo /usr/bin/smbpasswd app-samba-core
 /usr/sbin/addsudo /usr/sbin/add-samba-directories app-samba-core
+/usr/sbin/addsudo /usr/sbin/app-samba-openldap-initialize app-samba-core
+/usr/sbin/addsudo /usr/sbin/app-samba-initialize app-samba-core
+
+# Initialize flag change
+#-----------------------
+
+if [ -e /var/clearos/samba/initialized ]; then
+    logger -p local6.notice -t installer "app-samba-core - migrating initialization flag"
+    touch /var/clearos/samba_common/initialized
+    rm /var/clearos/samba/initialized
+fi
 
 # LDAP synchronize trigger
 #-------------------------

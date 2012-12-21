@@ -53,7 +53,7 @@ use \Exception as Exception;
 
 $computer = (isset($argv[1])) ? $argv[1] : '';
 
-// FIXME: remove this after _clearos_error_handler in the framework has been reviewed
+// TODO: remove this after _clearos_error_handler in the framework has been reviewed
 set_error_handler('no_errors_please');
 
 $samba = new OpenLDAP_Driver();

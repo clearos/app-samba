@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Samba administrator controller.
+ * Samba initialization controller.
  *
  * @category   Apps
  * @package    Samba
@@ -52,7 +52,7 @@ use \Exception as Exception;
  * @link       http://www.clearfoundation.com/docs/developer/apps/samba/
  */
 
-class Initialize extends ClearOS_Controller
+class Initialization extends ClearOS_Controller
 {
     /**
      * Samba server summary view.
@@ -73,13 +73,7 @@ class Initialize extends ClearOS_Controller
         //---------------
 
         try {
-            // In some circumstances, Samba can auto-initialize.  Give it a try.
-            $this->openldap_driver->initialize();
-
-            $is_blocked_slave = $this->openldap_driver->is_blocked_slave();
-            $is_local_initialized = $this->samba->is_local_system_initialized();
-            $is_initializing = $this->samba->is_initializing();
-            $is_initialized = $this->samba->is_initialized();
+            $is_samba_initialized = $this->samba->is_initialized();
         } catch (Exception $e) {
             $this->page->view_exception($e);
             return;
@@ -88,64 +82,10 @@ class Initialize extends ClearOS_Controller
         // Load views
         //-----------
 
-        if ($is_local_initialized) {
+        if ($is_samba_initialized) 
             redirect('/samba');
-        } else if ($is_initializing) {
-            $data['initializing'] = TRUE;
-            $this->page->view_form('samba/initializing', $data, lang('samba_app_name'));
-        } else if ($is_blocked_slave) {
-            $data['initializing'] = FALSE;
-            $this->page->view_form('samba/initializing', $data, lang('samba_app_name'));
-        } else {
+        else
             $this->edit();
-        }
-    }
-
-    /**
-     * Initializes Samba.
-     *
-     * @return JSON
-     */
-
-    function run()
-    {
-        // Load libraries
-        //---------------
-
-        $this->lang->load('samba');
-        $this->load->library('samba_common/Samba');
-        $this->load->library('samba/OpenLDAP_Driver');
-        $this->load->factory('mode/Mode_Factory');
-
-        // Handle form submit
-        //-------------------
-
-        header('Cache-Control: no-cache, must-revalidate');
-        header('Expires: Fri, 01 Jan 2010 05:00:00 GMT');
-        header('Content-type: application/json');
-
-        try {
-            $mode = $this->mode->get_mode();
-
-            if ($mode === Mode_Engine::MODE_SLAVE) {
-                $this->openldap_driver->initialize_local_slave(
-                    $this->input->post('netbios'),
-                    $this->input->post('password')
-                );
-            } else {
-                $this->openldap_driver->initialize_local_master_or_standalone(
-                    $this->input->post('netbios'),
-                    $this->input->post('domain'),
-                    $this->input->post('password')
-                );
-            }
-
-            $status['code'] = 0;
-
-            echo json_encode($status);
-        } catch (Exception $e) {
-            echo json_encode(array('code' => clearos_exception_code($e), 'error_message' => clearos_exception_message($e)));
-        }
     }
 
     /**
@@ -202,6 +142,8 @@ class Initialize extends ClearOS_Controller
 
             if ($this->mode->get_mode() === Mode_Engine::MODE_SLAVE)
                 $data['mode'] = 'slave';
+            else
+                $data['mode'] = 'notslave';
         } catch (Exception $e) {
             $this->page->view_exception($e);
             return;
@@ -211,5 +153,104 @@ class Initialize extends ClearOS_Controller
         //-----------
 
         $this->page->view_form('samba/initialize', $data, lang('samba_app_name'));
+    }
+
+    /**
+     * Returns initialization status.
+     *
+     * @return JSON
+     */
+
+    function get_status()
+    {
+        // Load libraries
+        //---------------
+
+        $this->load->library('samba/OpenLDAP_Driver');
+
+        // Handle form submit
+        //-------------------
+
+        try {
+            $data['status'] = $this->openldap_driver->get_status();
+            $data['code'] = 0;
+        } catch (Exception $e) {
+            $data['code'] = clearos_exception_code($e);
+            $data['error_message'] = clearos_exception_message($e);
+        }
+
+        // Return status message
+        //----------------------
+
+        header('Cache-Control: no-cache, must-revalidate');
+        header('Expires: Fri, 01 Jan 2010 05:00:00 GMT');
+        header('Content-type: application/json');
+        echo json_encode($data);
+    }
+
+    /**
+     * Initializes Samba directory.
+     *
+     * @return JSON
+     */
+
+    function run_openldap_initialization()
+    {
+        // Load libraries
+        //---------------
+
+        $this->load->library('samba/OpenLDAP_Driver');
+
+        // Run initialization
+        //-------------------
+
+        $this->openldap_driver->run_initialize();
+    }
+
+    /**
+     * Initializes Samba.
+     *
+     * @return JSON
+     */
+
+    function run()
+    {
+        // Load libraries
+        //---------------
+
+        $this->lang->load('samba');
+        $this->load->library('samba_common/Samba');
+        $this->load->library('samba/OpenLDAP_Driver');
+        $this->load->factory('mode/Mode_Factory');
+
+        // Handle form submit
+        //-------------------
+
+        header('Cache-Control: no-cache, must-revalidate');
+        header('Expires: Fri, 01 Jan 2010 05:00:00 GMT');
+        header('Content-type: application/json');
+
+        try {
+            $mode = $this->mode->get_mode();
+
+            if ($mode === Mode_Engine::MODE_SLAVE) {
+                $this->openldap_driver->initialize_samba_as_slave(
+                    $this->input->post('netbios'),
+                    $this->input->post('password')
+                );
+            } else {
+                $this->openldap_driver->run_initialize_samba_as_master_or_standalone(
+                    $this->input->post('netbios'),
+                    $this->input->post('domain'),
+                    $this->input->post('password')
+                );
+            }
+
+            $status['code'] = 0;
+
+            echo json_encode($status);
+        } catch (Exception $e) {
+            echo json_encode(array('code' => clearos_exception_code($e), 'error_message' => clearos_exception_message($e)));
+        }
     }
 }

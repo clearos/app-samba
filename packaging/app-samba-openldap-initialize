@@ -1,0 +1,104 @@
+#!/usr/clearos/sandbox/usr/bin/php
+<?php
+
+/**
+ * Samba initialization script.
+ *
+ * @category   ClearOS
+ * @package    Samba
+ * @subpackage Scripts
+ * @author     ClearFoundation <developer@clearfoundation.com>
+ * @copyright  2012 ClearFoundation
+ * @license    http://www.gnu.org/copyleft/lgpl.html GNU Lesser General Public License version 3 or later
+ * @link       http://www.clearfoundation.com/docs/developer/apps/samba/
+ */
+
+///////////////////////////////////////////////////////////////////////////////
+// B O O T S T R A P
+///////////////////////////////////////////////////////////////////////////////
+
+$bootstrap = getenv('CLEAROS_BOOTSTRAP') ? getenv('CLEAROS_BOOTSTRAP') : '/usr/clearos/framework/shared';
+require_once $bootstrap . '/bootstrap.php';
+
+///////////////////////////////////////////////////////////////////////////////
+// D E P E N D E N C I E S
+///////////////////////////////////////////////////////////////////////////////
+
+// Classes
+//--------
+
+use \clearos\apps\samba\OpenLDAP_Driver as OpenLDAP_Driver;
+use \clearos\apps\samba_common\Samba as Samba;
+
+clearos_load_library('samba/OpenLDAP_Driver');
+clearos_load_library('samba_common/Samba');
+
+// Exceptions
+//-----------
+
+use \Exception as Exception;
+
+///////////////////////////////////////////////////////////////////////////////
+// F U N C T I O N S
+///////////////////////////////////////////////////////////////////////////////
+
+function ttyecho($on)
+{
+    global $ttyecho;
+
+    if ($on) {
+        if (isset($ttyecho))
+            exec('stty ' .$ttyecho);
+    } else {
+        $ttyecho = exec('stty -g');
+        exec('stty -echo');
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// O P T I O N S
+///////////////////////////////////////////////////////////////////////////////
+
+$short_options = '';
+$short_options .= 'f';  // Force
+$short_options .= 'h';  // Help
+
+$help_options  = '';
+$help_options .= "  -f: Force initialization\n";
+$help_options .= "\n";
+$help_options .= "  -h: Help\n";
+
+$options = getopt($short_options);
+
+$help = isset($options['h']) ? TRUE : FALSE;
+$force = isset($options['f']) ? TRUE : FALSE;
+
+///////////////////////////////////////////////////////////////////////////////
+// M A I N
+///////////////////////////////////////////////////////////////////////////////
+
+$samba = new Samba();
+$openldap = new OpenLDAP_Driver();
+
+// Basic usage stuff
+//------------------
+
+if ($help) {
+    echo "usage: " . $argv[0] . " [options]\n";
+    echo $help_options;
+    exit(0);
+}
+
+try {
+    if (!$force && $samba->is_initialized()) {
+        echo "Samba OpenLDAP is already initialized\n";
+        exit(0);
+    }
+} catch (Exception $e) {
+    echo "error: " . $e->GetMessage() . "\n";
+}
+
+// Handle command line options
+//--------------------------------------------------------------------
+
+$openldap->initialize($force);
