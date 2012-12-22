@@ -60,7 +60,6 @@ $app['core_requires'] = array(
     'app-samba-common-core >= 1:1.4.10',
     'csplugin-filewatch',
     'libtalloc',
-    'samba >= 3.6.1',
     'samba-common >= 3.6.1',
     'samba-client >= 3.6.1',
     'samba-winbind >= 3.6.1',
