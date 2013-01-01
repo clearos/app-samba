@@ -300,10 +300,9 @@ class OpenLDAP_Driver extends Engine
     {
         clearos_profile(__METHOD__, __LINE__);
 
-        if ($this->ldaph === NULL)
-            $this->_get_ldap_handle();
+        $ldap = new LDAP_Driver();
 
-        return $this->ldaph->get_bind_password();
+        return $ldap->get_bind_password();
     }
 
     /**
@@ -1028,14 +1027,17 @@ class OpenLDAP_Driver extends Engine
         if ($samba->get_mode() === Samba::MODE_PDC)
             $this->add_computer($samba->get_netbios_name());
 
-        $this->_net_rpc_join($password);
+        // $this->_net_rpc_join($password);
 
         // Cleanup LDAP
         //-------------
 
         try {
-            if ($samba->get_mode() === Samba::MODE_PDC)
+            if ($samba->get_mode() === Samba::MODE_PDC) {
                 $this->cleanup_entries();
+                $this->_save_bind_password();
+                $this->_save_idmap_password();
+            }
         } catch (Exception $e) {
             // Not fatal
         }
