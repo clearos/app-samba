@@ -90,13 +90,6 @@ elif [ "$1" == "directory_online_event" ]; then
 
 elif [ "$1" == "network_change_event" ]; then
     update_interfaces_config
-
-# Create home directories when accounts system is changed
-#--------------------------------------------------------
-
-elif [ "$1" == "account_change_event" ]; then
-    logger -p local6.notice -t clearsync "samba - checking home directories"
-    [ -x /usr/sbin/samba-homes ] && /usr/sbin/samba-homes >/dev/null 2>&1
 fi
 
 exit 0
