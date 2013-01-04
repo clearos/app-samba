@@ -71,7 +71,11 @@ if [ "$1" == "configuration_change_event" ]; then
 #---------------------------------------
 
 elif [ "$1" == "directory_online_event" ]; then
-    if ( [ ! -e /var/clearos/samba/initialized_openldap ] && [ -e /var/clearos/accounts/initialized ] ); then
+    if ( [ -e /var/clearos/openldap_directory/ready_for_extensions ] || [ -e /var/clearos/accounts/initialized ] ); then
+        READY="yes"
+    fi
+
+    if ( [ ! -e /var/clearos/samba/initialized_openldap ] && [ -n "$READY" ] ); then
         logger -p local6.notice -t clearsync "samba - checking Samba directory initialization"
         ( flock -x -n 200
             logger -p local6.notice -t clearsync "samba - initializing Samba directory"

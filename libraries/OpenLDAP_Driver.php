@@ -149,6 +149,7 @@ class OpenLDAP_Driver extends Engine
 
     const FILE_INITIALIZED = '/var/clearos/samba/initialized_openldap';
     const FILE_INITIALIZING = '/var/clearos/samba/lock/initializing';
+    const FILE_READY_FOR_EXTENSIONS = '/var/clearos/openldap_directory/ready_for_extensions';
 
     const COMMAND_NET = '/usr/bin/net';
     const COMMAND_SMBPASSWD = '/usr/bin/smbpasswd';
@@ -754,14 +755,24 @@ class OpenLDAP_Driver extends Engine
             return;
         }
 
+        // Bail if OpenLDAP is not ready
         // Bail if slave, but master is not Samba-ready
         //---------------------------------------------
 
         $sysmode = Mode_Factory::create();
         $mode = $sysmode->get_mode();
 
-        if (($mode === Mode_Engine::MODE_SLAVE) && !$this->is_ready())
-            return;
+        if ($mode === Mode_Engine::MODE_SLAVE) {
+            if (!$this->is_ready())
+                return;
+        } else {
+            $accounts = new Accounts_Driver();
+            $accounts_initialized = $accounts->is_initialized();
+            $ready_file = new File(self::FILE_READY_FOR_EXTENSIONS);
+
+            if (!$accounts_initialized && !$ready_file->exists())
+                return;
+        }
 
         // Lock state file
         //----------------
