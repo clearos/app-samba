@@ -2221,14 +2221,26 @@ class OpenLDAP_Driver extends Engine
         $samba->set_domain_sid();
         $samba->set_local_sid();
 
-        if ($nmbd_wasrunning)
-            $nmbd->set_running_state(TRUE);
+        try {
+            if ($nmbd_wasrunning)
+                $nmbd->set_running_state(TRUE);
 
-        if ($smbd_wasrunning)
-            $smbd->set_running_state(TRUE);
+            if ($smbd_wasrunning)
+                $smbd->set_running_state(TRUE);
 
-        if ($winbind_wasrunning)
-            $winbind->set_running_state(TRUE);
+            if ($winbind_wasrunning)
+                $winbind->set_running_state(TRUE);
+        } catch (Exception $e) {
+            sleep(5);
+            if ($nmbd_wasrunning)
+                $nmbd->set_running_state(TRUE);
+
+            if ($smbd_wasrunning)
+                $smbd->set_running_state(TRUE);
+
+            if ($winbind_wasrunning)
+                $winbind->set_running_state(TRUE);
+        }
     }
 
     /**
