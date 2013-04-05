@@ -400,7 +400,10 @@ class OpenLDAP_Driver extends Engine
         if ($this->ldaph === NULL)
             $this->_get_ldap_handle();
 
-        if (! $this->is_initialized())
+        $sysmode = Mode_Factory::create();
+        $mode = $sysmode->get_mode();
+
+        if (($mode !== Mode_Engine::MODE_SLAVE) && !$this->is_initialized())
             throw new Samba_Not_Initialized_Exception();
 
         $result = $this->ldaph->search(
@@ -472,7 +475,7 @@ class OpenLDAP_Driver extends Engine
         $sysmode = Mode_Factory::create();
         $mode = $sysmode->get_mode();
 
-        if (($mode === Mode_Engine::MODE_SLAVE) && $this->is_ready())
+        if (($mode === Mode_Engine::MODE_SLAVE) && !$this->is_ready())
             return self::STATUS_OPENLDAP_BLOCKED_SLAVE;
 
         // Samba OpenLDAP uninitialized

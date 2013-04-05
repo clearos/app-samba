@@ -101,6 +101,7 @@ class Initialization extends ClearOS_Controller
 
         $this->lang->load('samba');
         $this->load->library('samba_common/Samba');
+        $this->load->library('samba/OpenLDAP_Driver');
         $this->load->factory('mode/Mode_Factory');
 
         // Set validation rules
@@ -110,7 +111,9 @@ class Initialization extends ClearOS_Controller
         $this->form_validation->set_policy('domain', 'samba_common/Samba', 'validate_workgroup', TRUE);
         $this->form_validation->set_policy('password', 'samba_common/Samba', 'validate_password', TRUE);
 
-        if ($this->mode->get_mode() !== Mode_Engine::MODE_SLAVE)
+    $mode = $this->mode->get_mode();
+
+        if ($mode !== Mode_Engine::MODE_SLAVE)
             $this->form_validation->set_policy('verify', 'samba_common/Samba', 'validate_password', TRUE);
 
         $form_ok = $this->form_validation->run();
@@ -136,14 +139,16 @@ class Initialization extends ClearOS_Controller
 
         try {
             $data['form_type'] = $form_type;
-            $data['domain'] = $this->samba->get_workgroup();
             $data['netbios'] = $this->samba->get_netbios_name();
             $data['administrator'] = $this->samba->get_administrator_account();
 
-            if ($this->mode->get_mode() === Mode_Engine::MODE_SLAVE)
+            if ($mode === Mode_Engine::MODE_SLAVE) {
                 $data['mode'] = 'slave';
-            else
+                $data['domain'] = $this->openldap_driver->get_domain();
+            } else {
                 $data['mode'] = 'notslave';
+                $data['domain'] = $this->samba->get_workgroup();
+            }
         } catch (Exception $e) {
             $this->page->view_exception($e);
             return;
