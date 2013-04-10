@@ -1,7 +1,7 @@
 
 Name: app-samba
 Epoch: 1
-Version: 1.4.34
+Version: 1.4.35
 Release: 1%{dist}
 Summary: Windows Networking
 License: GPLv3
@@ -70,6 +70,8 @@ install -D -m 0644 packaging/smb.ldap.conf %{buildroot}/var/clearos/ldap/synchro
 install -D -m 0644 packaging/smb.php %{buildroot}/var/clearos/base/daemon/smb.php
 install -D -m 0644 packaging/smb.winbind.conf %{buildroot}/var/clearos/ldap/synchronize/smb.winbind.conf
 install -D -m 0644 packaging/winbind.php %{buildroot}/var/clearos/base/daemon/winbind.php
+
+rm -rf %{buildroot}/usr/clearos/apps/samba/libraries_zendguard
 
 %post
 logger -p local6.notice -t installer 'app-samba - installing'
