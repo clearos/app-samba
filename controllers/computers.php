@@ -3,9 +3,9 @@
 /**
  * Samba computers controller.
  *
- * @category   Apps
- * @package    Samba
- * @subpackage Controllers
+ * @category   apps
+ * @package    samba
+ * @subpackage controllers
  * @author     ClearFoundation <developer@clearfoundation.com>
  * @copyright  2011 ClearFoundation
  * @license    http://www.gnu.org/copyleft/gpl.html GNU General Public License version 3 or later
@@ -42,9 +42,9 @@ use \clearos\apps\samba_common\Samba as Samba;
 /**
  * Samba computers controller.
  *
- * @category   Apps
- * @package    Samba
- * @subpackage Controllers
+ * @category   apps
+ * @package    samba
+ * @subpackage controllers
  * @author     ClearFoundation <developer@clearfoundation.com>
  * @copyright  2011 ClearFoundation
  * @license    http://www.gnu.org/copyleft/gpl.html GNU General Public License version 3 or later

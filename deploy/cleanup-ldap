@@ -4,9 +4,9 @@
 /**
  * Samba LDAP cleanup.
  *
- * @category   Apps
- * @package    Account_Import
- * @subpackage Scripts
+ * @category   apps
+ * @package    samba
+ * @subpackage scripts
  * @author     ClearFoundation <developer@clearfoundation.com>
  * @copyright  2008-2011 ClearFoundation
  * @license    http://www.gnu.org/copyleft/gpl.html GNU General Public License version 3 or later
