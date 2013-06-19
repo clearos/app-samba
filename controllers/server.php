@@ -7,7 +7,7 @@
  * @package    samba
  * @subpackage controllers
  * @author     ClearFoundation <developer@clearfoundation.com>
- * @copyright  2012 ClearFoundation
+ * @copyright  2012-2013 ClearFoundation
  * @license    http://www.gnu.org/copyleft/gpl.html GNU General Public License version 3 or later
  * @link       http://www.clearfoundation.com/docs/developer/apps/samba/
  */
@@ -33,7 +33,9 @@
 // D E P E N D E N C I E S
 ///////////////////////////////////////////////////////////////////////////////
 
-use \clearos\apps\base\Daemon as Daemon;
+use \clearos\apps\base\Daemon as Daemon_Class;
+
+require clearos_app_base('base') . '/controllers/daemon.php';
 
 ///////////////////////////////////////////////////////////////////////////////
 // C L A S S
@@ -46,13 +48,24 @@ use \clearos\apps\base\Daemon as Daemon;
  * @package    samba
  * @subpackage controllers
  * @author     ClearFoundation <developer@clearfoundation.com>
- * @copyright  2012 ClearFoundation
+ * @copyright  2012-2013 ClearFoundation
  * @license    http://www.gnu.org/copyleft/gpl.html GNU General Public License version 3 or later
  * @link       http://www.clearfoundation.com/docs/developer/apps/samba/
  */
 
-class Server extends ClearOS_Controller
+class Server extends Daemon
 {
+    /**
+     * Samba server constructor.
+     *
+     * @return view
+     */
+
+    function __construct()
+    {
+        parent::__construct('nmb', 'samba');
+    }
+
     /**
      * Default controller.
      *
@@ -94,7 +107,7 @@ class Server extends ClearOS_Controller
         $nmbd_running = $this->nmbd->get_running_state();
         $smbd_running = $this->smbd->get_running_state();
 
-        $status['status'] = ($smbd_running && $nmbd_running) ? Daemon::STATUS_RUNNING : Daemon::STATUS_STOPPED;
+        $status['status'] = ($smbd_running && $nmbd_running) ? Daemon_Class::STATUS_RUNNING : Daemon_Class::STATUS_STOPPED;
 
         echo json_encode($status);
     }
@@ -113,6 +126,8 @@ class Server extends ClearOS_Controller
         try {
             $this->nmbd->set_running_state(TRUE);
             $this->smbd->set_running_state(TRUE);
+            $this->nmbd->set_boot_state(TRUE);
+            $this->smbd->set_boot_state(TRUE);
         } catch (Exception $e) {
             // Keep going
         }
@@ -132,6 +147,8 @@ class Server extends ClearOS_Controller
         try {
             $this->smbd->set_running_state(FALSE);
             $this->nmbd->set_running_state(FALSE);
+            $this->smbd->set_boot_state(FALSE);
+            $this->nmbd->set_boot_state(FALSE);
         } catch (Exception $e) {
             // Keep going
         }
