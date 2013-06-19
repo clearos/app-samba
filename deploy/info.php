@@ -72,6 +72,7 @@ $app['core_file_manifest'] = array(
     'filewatch-samba-configuration.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-configuration.conf'),
     'filewatch-samba-directory.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-directory.conf'),
     'filewatch-samba-network.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-network.conf'),
+    'filewatch-samba-printing.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-printing.conf'),
     'smb.ldap.conf' => array( 'target' => '/var/clearos/ldap/synchronize/smb.ldap.conf' ),
     'smb.winbind.conf' => array( 'target' => '/var/clearos/ldap/synchronize/smb.winbind.conf' ),
     'add-samba-directories' => array(

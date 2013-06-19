@@ -64,14 +64,13 @@ install -D -m 0755 packaging/app-samba-openldap-initialize %{buildroot}/usr/sbin
 install -D -m 0644 packaging/filewatch-samba-configuration.conf %{buildroot}/etc/clearsync.d/filewatch-samba-configuration.conf
 install -D -m 0644 packaging/filewatch-samba-directory.conf %{buildroot}/etc/clearsync.d/filewatch-samba-directory.conf
 install -D -m 0644 packaging/filewatch-samba-network.conf %{buildroot}/etc/clearsync.d/filewatch-samba-network.conf
+install -D -m 0644 packaging/filewatch-samba-printing.conf %{buildroot}/etc/clearsync.d/filewatch-samba-printing.conf
 install -D -m 0644 packaging/nmb.php %{buildroot}/var/clearos/base/daemon/nmb.php
 install -D -m 0755 packaging/samba-add-machine %{buildroot}/usr/sbin/samba-add-machine
 install -D -m 0644 packaging/smb.ldap.conf %{buildroot}/var/clearos/ldap/synchronize/smb.ldap.conf
 install -D -m 0644 packaging/smb.php %{buildroot}/var/clearos/base/daemon/smb.php
 install -D -m 0644 packaging/smb.winbind.conf %{buildroot}/var/clearos/ldap/synchronize/smb.winbind.conf
 install -D -m 0644 packaging/winbind.php %{buildroot}/var/clearos/base/daemon/winbind.php
-
-rm -rf %{buildroot}/usr/clearos/apps/samba/libraries_zendguard
 
 %post
 logger -p local6.notice -t installer 'app-samba - installing'
@@ -124,6 +123,7 @@ exit 0
 /etc/clearsync.d/filewatch-samba-configuration.conf
 /etc/clearsync.d/filewatch-samba-directory.conf
 /etc/clearsync.d/filewatch-samba-network.conf
+/etc/clearsync.d/filewatch-samba-printing.conf
 /var/clearos/base/daemon/nmb.php
 /usr/sbin/samba-add-machine
 /var/clearos/ldap/synchronize/smb.ldap.conf
