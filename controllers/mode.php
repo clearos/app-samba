@@ -154,7 +154,7 @@ class Mode extends ClearOS_Controller
             $data['logon_script'] = $this->samba->get_logon_script();
             $data['logon_drive'] = $this->samba->get_logon_drive();
             $data['logon_drives'] = array(
-                'L:', 'M:', 'N:', 'O:', 'P:', 'Q:', 'R:', 'S:', 'T:', 'U:', 'V:', 'W:', 'X:', 'Y:', 'Z:'
+                'G:', 'H:', 'I:', 'J:', 'K:', 'L:', 'M:', 'N:', 'O:', 'P:', 'Q:', 'R:', 'S:', 'T:', 'U:', 'V:', 'W:', 'X:', 'Y:', 'Z:'
             );
 
             $master_modes = array(
