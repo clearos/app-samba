@@ -500,6 +500,9 @@ class OpenLDAP_Driver extends Engine
     {
         clearos_profile(__METHOD__, __LINE__);
 
+        // Note: an empty password is passed by the ClearOS 5.x to 6 import tool.
+        // There's no need to run the actions that require a password on an import.
+
         // Directory needs to be initialized
         //----------------------------------
 
@@ -536,14 +539,16 @@ class OpenLDAP_Driver extends Engine
         // Set the winadmin password
         //--------------------------
 
-        clearos_log('samba', 'setting winadmin password');
+        if (! empty($password)) {
+            clearos_log('samba', 'setting winadmin password');
 
-        try {
-            $user = User_Factory::create(self::CONSTANT_WINADMIN_USERNAME);
-            $user->reset_password($password, $password, self::CONSTANT_WINADMIN_USERNAME);
-        } catch (Exception $e) {
-            $this->_delete_lock($initializing_lock, Samba::FILE_INITIALIZING);
-            throw new Exception($e);
+            try {
+                $user = User_Factory::create(self::CONSTANT_WINADMIN_USERNAME);
+                $user->reset_password($password, $password, self::CONSTANT_WINADMIN_USERNAME);
+            } catch (Exception $e) {
+                $this->_delete_lock($initializing_lock, Samba::FILE_INITIALIZING);
+                throw new Exception($e);
+            }
         }
 
         // Set default mode
@@ -629,25 +634,29 @@ class OpenLDAP_Driver extends Engine
         // Grant default privileges to winadmin et al
         //-------------------------------------------
 
-        clearos_log('samba', 'granting privileges for domain_users');
+        if (! empty($password)) {
+            clearos_log('samba', 'granting privileges for domain_users');
 
-        try {
-            $this->_net_grant_default_privileges($password);
-        } catch (Exception $e) {
-            $this->_delete_lock($initializing_lock, Samba::FILE_INITIALIZING);
-            throw new Exception($e);
+            try {
+                $this->_net_grant_default_privileges($password);
+            } catch (Exception $e) {
+                $this->_delete_lock($initializing_lock, Samba::FILE_INITIALIZING);
+                throw new Exception($e);
+            }
         }
 
         // Join the local system to itself
         //--------------------------------
 
-        clearos_log('samba', 'joining system to the domain');
+        if (! empty($password)) {
+            clearos_log('samba', 'joining system to the domain');
 
-        try {
-            $this->_net_rpc_join($password);
-        } catch (Exception $e) {
-            $this->_delete_lock($initializing_lock, Samba::FILE_INITIALIZING);
-            throw new Exception($e);
+            try {
+                $this->_net_rpc_join($password);
+            } catch (Exception $e) {
+                $this->_delete_lock($initializing_lock, Samba::FILE_INITIALIZING);
+                throw new Exception($e);
+            }
         }
 
         // Update local file permissions
@@ -729,7 +738,7 @@ class OpenLDAP_Driver extends Engine
      * @throws Engine_Exception
      */
 
-    public function initialize($force = FALSE)
+    public function initialize($force = FALSE, $domain = 'CLEARSYSTEM')
     {
         clearos_profile(__METHOD__, __LINE__);
 
@@ -793,7 +802,7 @@ class OpenLDAP_Driver extends Engine
 
         try {
             if (($mode === Mode_Engine::MODE_MASTER) || ($mode === Mode_Engine::MODE_STANDALONE))
-                $this->_initialize_master_system('CLEARSYSTEM', NULL, $force);
+                $this->_initialize_master_system($domain, NULL, $force);
             else if ($mode === Mode_Engine::MODE_SLAVE)
                 $this->_initialize_slave_system('BDC');
             else
