@@ -57,7 +57,7 @@ $app['core_requires'] = array(
     'app-network-core', 
     'app-openldap-directory-core', 
     'app-samba-extension-core >= 1:1.4.11',
-    'app-samba-common-core >= 1:1.4.11',
+    'app-samba-common-core >= 1:1.4.70',
     'csplugin-filewatch',
     'libtalloc',
     'samba-common >= 3.6.1',
@@ -71,7 +71,6 @@ $app['core_requires'] = array(
 $app['core_file_manifest'] = array( 
     'filewatch-samba-configuration.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-configuration.conf'),
     'filewatch-samba-directory.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-directory.conf'),
-    'filewatch-samba-network.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-network.conf'),
     'filewatch-samba-printing.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-printing.conf'),
     'smb.ldap.conf' => array( 'target' => '/var/clearos/ldap/synchronize/smb.ldap.conf' ),
     'smb.winbind.conf' => array( 'target' => '/var/clearos/ldap/synchronize/smb.winbind.conf' ),

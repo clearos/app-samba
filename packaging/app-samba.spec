@@ -31,7 +31,7 @@ Requires: app-users-core >= 1:1.1.1
 Requires: app-network-core
 Requires: app-openldap-directory-core
 Requires: app-samba-extension-core >= 1:1.4.11
-Requires: app-samba-common-core >= 1:1.4.11
+Requires: app-samba-common-core >= 1:1.4.70
 Requires: csplugin-filewatch
 Requires: libtalloc
 Requires: samba-common >= 3.6.1
@@ -63,7 +63,6 @@ install -D -m 0755 packaging/app-samba-initialize %{buildroot}/usr/sbin/app-samb
 install -D -m 0755 packaging/app-samba-openldap-initialize %{buildroot}/usr/sbin/app-samba-openldap-initialize
 install -D -m 0644 packaging/filewatch-samba-configuration.conf %{buildroot}/etc/clearsync.d/filewatch-samba-configuration.conf
 install -D -m 0644 packaging/filewatch-samba-directory.conf %{buildroot}/etc/clearsync.d/filewatch-samba-directory.conf
-install -D -m 0644 packaging/filewatch-samba-network.conf %{buildroot}/etc/clearsync.d/filewatch-samba-network.conf
 install -D -m 0644 packaging/filewatch-samba-printing.conf %{buildroot}/etc/clearsync.d/filewatch-samba-printing.conf
 install -D -m 0644 packaging/nmb.php %{buildroot}/var/clearos/base/daemon/nmb.php
 install -D -m 0755 packaging/samba-add-machine %{buildroot}/usr/sbin/samba-add-machine
@@ -122,7 +121,6 @@ exit 0
 /usr/sbin/app-samba-openldap-initialize
 /etc/clearsync.d/filewatch-samba-configuration.conf
 /etc/clearsync.d/filewatch-samba-directory.conf
-/etc/clearsync.d/filewatch-samba-network.conf
 /etc/clearsync.d/filewatch-samba-printing.conf
 /var/clearos/base/daemon/nmb.php
 /usr/sbin/samba-add-machine
