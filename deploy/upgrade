@@ -42,6 +42,18 @@ if [ -n "$CHECK" ]; then
     mv /etc/samba/smb.conf.new /etc/samba/smb.conf
 fi
 
+# Disable unix password sync ... always
+#--------------------------------------
+
+if [ ! -e /var/clearos/samba/unix_password_sync ]; then
+    CHECK=`grep -i "^unix password sync[[:space:]]*=[[:space:]]*Yes" /etc/samba/smb.conf 2>/dev/null`
+    if [ -n "$CHECK" ]; then
+        logger -p local6.notice -t installer "app-samba-core - disabling unix password sync"
+        sed -i -e '/^unix password sync[[:space:]]*=.*/d' /etc/samba/smb.conf
+    fi
+    touch /var/clearos/samba/unix_password_sync
+fi
+
 # Run events
 #-----------
 
