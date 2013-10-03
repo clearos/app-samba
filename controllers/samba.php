@@ -55,6 +55,16 @@ class Samba extends ClearOS_Controller
 
     function index()
     {
+        $this->lang->load('samba');
+
+        // Show warning if Samba 4 is installed
+        //-------------------------------------
+
+        if (file_exists('/usr/bin/samba-tool')) {
+            $this->page->view_form('samba/samba4', $data, lang('samba_app_name'));
+            return;
+        }
+
         // Show account status widget if we're not in a happy state
         //---------------------------------------------------------
 
@@ -68,7 +78,6 @@ class Samba extends ClearOS_Controller
         // Load libraries
         //---------------
 
-        $this->lang->load('samba');
         $this->load->library('samba_common/Samba');
 
         // Load view data
