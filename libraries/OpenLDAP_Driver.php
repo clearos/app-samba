@@ -56,9 +56,13 @@ clearos_load_language('samba_common');
 // Factories
 //----------
 
+use \clearos\apps\groups\Group_Factory as Group;
+use \clearos\apps\groups\Group_Manager_Factory as Group_Manager;
 use \clearos\apps\users\User_Factory as User;
 use \clearos\apps\users\User_Manager_Factory as User_Manager;
 
+clearos_load_library('groups/Group_Factory');
+clearos_load_library('groups/Group_Manager_Factory');
 clearos_load_library('users/User_Factory');
 clearos_load_library('users/User_Manager_Factory');
 
@@ -70,6 +74,7 @@ use \clearos\apps\base\Engine as Engine;
 use \clearos\apps\base\File as File;
 use \clearos\apps\base\Folder as Folder;
 use \clearos\apps\base\Shell as Shell;
+use \clearos\apps\groups\Group_Engine as Group_Engine;
 use \clearos\apps\ldap\LDAP_Utilities as LDAP_Utilities;
 use \clearos\apps\ldap\Nslcd as Nslcd;
 use \clearos\apps\mode\Mode_Engine as Mode_Engine;
@@ -93,6 +98,7 @@ clearos_load_library('base/Engine');
 clearos_load_library('base/File');
 clearos_load_library('base/Folder');
 clearos_load_library('base/Shell');
+clearos_load_library('groups/Group_Engine');
 clearos_load_library('ldap/LDAP_Utilities');
 clearos_load_library('ldap/Nslcd');
 clearos_load_library('mode/Mode_Engine');
@@ -685,8 +691,10 @@ class OpenLDAP_Driver extends Engine
         //-------------
 
         try {
-            if ($samba->get_mode() === Samba::MODE_PDC)
+            if ($samba->get_mode() === Samba::MODE_PDC) {
                 $this->cleanup_entries();
+                $this->cleanup_sids();
+            }
         } catch (Exception $e) {
             // Not fatal
         }
@@ -1370,10 +1378,11 @@ class OpenLDAP_Driver extends Engine
             }
         }
 
-        // Cleanup user SIDs
-        //------------------
+        // Cleanup user and group SIDs
+        //----------------------------
 
         if (!empty($sid)) {
+            // Users
             $user_manager = User_Manager::create();
             $users = $user_manager->get_list(User_Engine::FILTER_ALL);
 
@@ -1387,6 +1396,35 @@ class OpenLDAP_Driver extends Engine
                     $user_info['extensions']['samba']['sid'] = $user_sid;
                     $user->update($user_info);
                     clearos_log('samba', 'fixing user SID for ' . $username);
+                }
+            }
+
+            // Groups
+            $group_manager = Group_Manager::create();
+            $groups = $group_manager->get_list(Group_Engine::FILTER_ALL);
+
+            foreach ($groups as $group_name) {
+                $group = Group::create($group_name);
+
+                $details = $group->get_info();
+                $group_sid = $sid . '-' . $details['core']['gid_number'];
+
+                if (isset($details['extensions']['samba']['sid'])) {
+                    $parts = preg_split('/-/', $details['extensions']['samba']['sid']);
+
+                    // Skip special groups (e.g. S-1-5-32-546)
+                    if (count($parts) < 7)
+                        continue;
+
+                    $base_sid = $parts[0] . '-' . $parts[1] . '-' . $parts[2] . '-' . $parts[3] .
+                        '-' . $parts[4] . '-' . $parts[5] . '-' . $parts[6];
+
+                    if ($base_sid != $sid) {
+                        $new_sid = $sid . '-' . $parts[7];
+                        $group_info['extensions']['samba']['sid'] = $new_sid;
+                        $group->update($group_info);
+                        clearos_log('samba', 'fixing group SID for ' . $group_name);
+                    }
                 }
             }
         }
