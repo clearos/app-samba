@@ -1,7 +1,7 @@
 
 Name: app-samba
 Epoch: 1
-Version: 1.5.10
+Version: 1.5.15
 Release: 1%{dist}
 Summary: Windows Networking
 License: GPLv3
@@ -107,7 +107,6 @@ exit 0
 %files core
 %defattr(-,root,root)
 %exclude /usr/clearos/apps/samba/packaging
-%exclude /usr/clearos/apps/samba/tests
 %dir /usr/clearos/apps/samba
 %dir /var/clearos/samba
 %dir /var/clearos/samba/backup
