@@ -699,14 +699,23 @@ class OpenLDAP_Driver extends Engine
             // Not fatal
         }
 
-        // Do a hard reset on Winbind... again
-        //------------------------------------
+        // Do a hard reset on Winbind and smb... again
+        //---------------------------------------------
 
         try {
             if ($winbind->get_running_state())
                 $winbind->restart();
             else
                 $winbind->set_running_state(TRUE);
+        } catch (Exception $e) {
+            // Not fatal
+        }
+
+        try {
+            if ($smbd->get_running_state())
+                $smbd->restart();
+            else
+                $smbd->set_running_state(TRUE);
         } catch (Exception $e) {
             // Not fatal
         }
