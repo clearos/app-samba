@@ -5,7 +5,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 $app['basename'] = 'samba';
-$app['version'] = '1.5.18';
+$app['version'] = '1.5.40';
 $app['release'] = '1';
 $app['vendor'] = 'ClearFoundation';
 $app['packager'] = 'ClearFoundation';
@@ -51,10 +51,11 @@ $app['requires'] = array(
 // Note: explicit libtalloc and samba-common dependencies make yum happy
 // when it distinguishes between Samba 3 and Samba 4.
 $app['core_requires'] = array(
-    'app-accounts-core',
+    'app-accounts-core >= 1:1.5.40',
     'app-groups-core',
     'app-users-core >= 1:1.1.1',
     'app-network-core', 
+    'app-openldap-core >= 1:1.5.40', 
     'app-openldap-directory-core', 
     'app-samba-extension-core >= 1:1.4.11',
     'app-samba-common-core >= 1:1.4.70',
@@ -70,7 +71,6 @@ $app['core_requires'] = array(
 
 $app['core_file_manifest'] = array( 
     'filewatch-samba-configuration.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-configuration.conf'),
-    'filewatch-samba-directory.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-directory.conf'),
     'filewatch-samba-printing.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-printing.conf'),
     'smb.ldap.conf' => array( 'target' => '/var/clearos/ldap/synchronize/smb.ldap.conf' ),
     'smb.winbind.conf' => array( 'target' => '/var/clearos/ldap/synchronize/smb.winbind.conf' ),
@@ -93,6 +93,14 @@ $app['core_file_manifest'] = array(
     'app-samba-initialize' => array(
         'target' => '/usr/sbin/app-samba-initialize',
         'mode' => '0755',
+    ),
+    'openldap-online-event'=> array(
+        'target' => '/var/clearos/events/openldap_online/samba',
+        'mode' => '0755'
+    ),
+    'accounts-initialized-event'=> array(
+        'target' => '/var/clearos/events/accounts_initialized/samba',
+        'mode' => '0755'
     ),
     'nmb.php'=> array('target' => '/var/clearos/base/daemon/nmb.php'),
     'smb.php'=> array('target' => '/var/clearos/base/daemon/smb.php'),
