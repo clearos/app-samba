@@ -58,14 +58,14 @@ cp -r * %{buildroot}/usr/clearos/apps/samba/
 install -d -m 0755 %{buildroot}/var/clearos/samba
 install -d -m 0755 %{buildroot}/var/clearos/samba/backup
 install -d -m 0775 %{buildroot}/var/clearos/samba/lock
-install -D -m 0755 packaging/accounts-initialized-event %{buildroot}/var/clearos/events/accounts_initialized/samba
+install -D -m 0755 packaging/accounts-ready-event %{buildroot}/var/clearos/events/accounts_ready/samba
 install -D -m 0755 packaging/add-samba-directories %{buildroot}/usr/sbin/add-samba-directories
 install -D -m 0755 packaging/add-windows-group-info %{buildroot}/usr/sbin/add-windows-group-info
 install -D -m 0755 packaging/app-samba-initialize %{buildroot}/usr/sbin/app-samba-initialize
 install -D -m 0755 packaging/app-samba-openldap-initialize %{buildroot}/usr/sbin/app-samba-openldap-initialize
-install -D -m 0644 packaging/filewatch-samba-configuration.conf %{buildroot}/etc/clearsync.d/filewatch-samba-configuration.conf
 install -D -m 0644 packaging/filewatch-samba-printing.conf %{buildroot}/etc/clearsync.d/filewatch-samba-printing.conf
 install -D -m 0644 packaging/nmb.php %{buildroot}/var/clearos/base/daemon/nmb.php
+install -D -m 0755 packaging/openldap-configuration-event %{buildroot}/var/clearos/events/openldap_configuration/samba
 install -D -m 0755 packaging/openldap-online-event %{buildroot}/var/clearos/events/openldap_online/samba
 install -D -m 0755 packaging/samba-add-machine %{buildroot}/usr/sbin/samba-add-machine
 install -D -m 0644 packaging/smb.ldap.conf %{buildroot}/var/clearos/ldap/synchronize/smb.ldap.conf
@@ -116,14 +116,14 @@ exit 0
 /usr/clearos/apps/samba/deploy
 /usr/clearos/apps/samba/language
 /usr/clearos/apps/samba/libraries
-/var/clearos/events/accounts_initialized/samba
+/var/clearos/events/accounts_ready/samba
 /usr/sbin/add-samba-directories
 /usr/sbin/add-windows-group-info
 /usr/sbin/app-samba-initialize
 /usr/sbin/app-samba-openldap-initialize
-/etc/clearsync.d/filewatch-samba-configuration.conf
 /etc/clearsync.d/filewatch-samba-printing.conf
 /var/clearos/base/daemon/nmb.php
+/var/clearos/events/openldap_configuration/samba
 /var/clearos/events/openldap_online/samba
 /usr/sbin/samba-add-machine
 /var/clearos/ldap/synchronize/smb.ldap.conf

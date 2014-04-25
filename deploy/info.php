@@ -70,7 +70,6 @@ $app['core_requires'] = array(
 );
 
 $app['core_file_manifest'] = array( 
-    'filewatch-samba-configuration.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-configuration.conf'),
     'filewatch-samba-printing.conf'=> array('target' => '/etc/clearsync.d/filewatch-samba-printing.conf'),
     'smb.ldap.conf' => array( 'target' => '/var/clearos/ldap/synchronize/smb.ldap.conf' ),
     'smb.winbind.conf' => array( 'target' => '/var/clearos/ldap/synchronize/smb.winbind.conf' ),
@@ -98,8 +97,12 @@ $app['core_file_manifest'] = array(
         'target' => '/var/clearos/events/openldap_online/samba',
         'mode' => '0755'
     ),
-    'accounts-initialized-event'=> array(
-        'target' => '/var/clearos/events/accounts_initialized/samba',
+    'openldap-configuration-event'=> array(
+        'target' => '/var/clearos/events/openldap_configuration/samba',
+        'mode' => '0755'
+    ),
+    'accounts-ready-event'=> array(
+        'target' => '/var/clearos/events/accounts_ready/samba',
         'mode' => '0755'
     ),
     'nmb.php'=> array('target' => '/var/clearos/base/daemon/nmb.php'),

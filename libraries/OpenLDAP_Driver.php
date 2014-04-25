@@ -155,7 +155,6 @@ class OpenLDAP_Driver extends Engine
 
     const FILE_INITIALIZED = '/var/clearos/samba/initialized_openldap';
     const FILE_INITIALIZING = '/var/clearos/samba/lock/initializing';
-    const FILE_READY_FOR_EXTENSIONS = '/var/clearos/openldap_directory/ready_for_extensions';
 
     const COMMAND_NET = '/usr/bin/net';
     const COMMAND_SMBPASSWD = '/usr/bin/smbpasswd';
@@ -808,10 +807,9 @@ class OpenLDAP_Driver extends Engine
                 return;
         } else {
             $accounts = new Accounts_Driver();
-            $accounts_initialized = $accounts->is_initialized();
-            $ready_file = new File(self::FILE_READY_FOR_EXTENSIONS);
+            $accounts_ready = $accounts->is_ready();
 
-            if (!$accounts_initialized && !$ready_file->exists())
+            if (!$accounts_ready)
                 return;
         }
 
@@ -1012,6 +1010,9 @@ class OpenLDAP_Driver extends Engine
     public function update_group_mappings($domain_sid = NULL)
     {
         clearos_profile(__METHOD__, __LINE__);
+
+        if (! $this->is_initialized())
+            return;
 
         if ($this->ldaph === NULL)
             $this->_get_ldap_handle();

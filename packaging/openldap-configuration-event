@@ -1,15 +1,12 @@
-#!/bin/sh
-
-/usr/sbin/app-samba-openldap-initialize
-
-if [ -e /var/clearos/samba_common/initialized ]; then
-    /usr/sbin/add-windows-group-info
-fi
+#!/bin/sh -x
 
 if [ -e /var/clearos/samba/initialized_openldap ]; then
     /usr/clearos/apps/samba/deploy/cleanup-ldap
     /usr/clearos/apps/samba/deploy/cleanup-sids
-
     # Seems to do some sort of LDAP sync, there's a better way no doubt
     /usr/bin/pdbedit -L -v >/dev/null 2>&1
+
+    /sbin/service winbind condrestart
+    /sbin/service nmb condrestart
+    /sbin/service smb condrestart
 fi
