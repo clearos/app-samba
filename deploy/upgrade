@@ -57,5 +57,5 @@ fi
 # Run events
 #-----------
 
-/usr/clearos/apps/samba/deploy/syncaction network_change_event
-/usr/clearos/apps/samba/deploy/syncaction directory_online_event
+/var/clearos/events/network_configuration/samba_common
+/var/clearos/events/openldap_online/samba
