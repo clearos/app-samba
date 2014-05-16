@@ -1863,8 +1863,12 @@ class OpenLDAP_Driver extends Engine
         $winbind = new Winbind();
         $nslcd = new Nslcd();
 
-        $nmbd->set_boot_state(TRUE);
-        $smbd->set_boot_state(TRUE);
+        if ($nmbd->is_installed())
+            $nmbd->set_boot_state(TRUE);
+
+        if ($smbd->is_installed())
+            $smbd->set_boot_state(TRUE);
+
         $winbind->set_boot_state(TRUE);
 
         try {
@@ -1876,8 +1880,12 @@ class OpenLDAP_Driver extends Engine
                     $nslcd->set_running_state(TRUE);
             }
 
-            $nmbd->set_running_state(TRUE);
-            $smbd->set_running_state(TRUE);
+            if ($nmbd->is_installed())
+                $nmbd->set_running_state(TRUE);
+
+            if ($smbd->is_installed())
+                $smbd->set_running_state(TRUE);
+
             if ($winbind->get_running_state())
                 $winbind->restart();
             else
