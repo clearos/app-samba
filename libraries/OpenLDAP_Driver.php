@@ -7,7 +7,7 @@
  * @package    samba
  * @subpackage libraries
  * @author     ClearFoundation <developer@clearfoundation.com>
- * @copyright  2003-2011 ClearFoundation
+ * @copyright  2003-2014 ClearFoundation
  * @license    http://www.gnu.org/copyleft/lgpl.html GNU Lesser General Public License version 3 or later
  * @link       http://www.clearfoundation.com/docs/developer/apps/samba/
  */
@@ -142,7 +142,7 @@ clearos_load_library('samba_common/Samba_Not_Initialized_Exception');
  * @package    samba
  * @subpackage libraries
  * @author     ClearFoundation <developer@clearfoundation.com>
- * @copyright  2003-2011 ClearFoundation
+ * @copyright  2003-2014 ClearFoundation
  * @license    http://www.gnu.org/copyleft/lgpl.html GNU Lesser General Public License version 3 or later
  * @link       http://www.clearfoundation.com/docs/developer/apps/samba/
  */
@@ -1088,8 +1088,7 @@ class OpenLDAP_Driver extends Engine
         try {
             if ($samba->get_mode() === Samba::MODE_PDC) {
                 $this->cleanup_entries();
-                $this->_save_bind_password();
-                $this->_save_idmap_password();
+                $this->cleanup_passwords();
             }
         } catch (Exception $e) {
             // Not fatal
@@ -1347,7 +1346,23 @@ class OpenLDAP_Driver extends Engine
     }
 
     /**
-     * Cleans up SIDs..
+     * Cleans up internal passwords.
+     *
+     * @access private
+     *
+     * @return void
+     */
+
+    public function cleanup_passwords()
+    {
+        clearos_profile(__METHOD__, __LINE__);
+
+        $this->_save_bind_password();
+        $this->_save_idmap_password();
+    }
+
+    /**
+     * Cleans up SIDs.
      *
      * @access private
      *

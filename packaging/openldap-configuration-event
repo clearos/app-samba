@@ -3,6 +3,7 @@
 if [ -e /var/clearos/samba/initialized_openldap ]; then
     /usr/clearos/apps/samba/deploy/cleanup-ldap
     /usr/clearos/apps/samba/deploy/cleanup-sids
+    /usr/clearos/apps/samba/deploy/cleanup-passwords
     # Seems to do some sort of LDAP sync, there's a better way no doubt
     /usr/bin/pdbedit -L -v >/dev/null 2>&1
 
