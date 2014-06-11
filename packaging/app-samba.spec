@@ -33,7 +33,6 @@ Requires: app-openldap-core >= 1:1.5.40
 Requires: app-openldap-directory-core
 Requires: app-samba-extension-core >= 1:1.4.11
 Requires: app-samba-common-core >= 1:1.4.70
-Requires: csplugin-filewatch
 Requires: libtalloc
 Requires: samba-common >= 3.6.1
 Requires: samba-client >= 3.6.1
@@ -63,7 +62,6 @@ install -D -m 0755 packaging/add-samba-directories %{buildroot}/usr/sbin/add-sam
 install -D -m 0755 packaging/add-windows-group-info %{buildroot}/usr/sbin/add-windows-group-info
 install -D -m 0755 packaging/app-samba-initialize %{buildroot}/usr/sbin/app-samba-initialize
 install -D -m 0755 packaging/app-samba-openldap-initialize %{buildroot}/usr/sbin/app-samba-openldap-initialize
-install -D -m 0644 packaging/filewatch-samba-printing.conf %{buildroot}/etc/clearsync.d/filewatch-samba-printing.conf
 install -D -m 0644 packaging/nmb.php %{buildroot}/var/clearos/base/daemon/nmb.php
 install -D -m 0755 packaging/openldap-configuration-event %{buildroot}/var/clearos/events/openldap_configuration/samba
 install -D -m 0755 packaging/openldap-online-event %{buildroot}/var/clearos/events/openldap_online/samba
@@ -121,7 +119,6 @@ exit 0
 /usr/sbin/add-windows-group-info
 /usr/sbin/app-samba-initialize
 /usr/sbin/app-samba-openldap-initialize
-/etc/clearsync.d/filewatch-samba-printing.conf
 /var/clearos/base/daemon/nmb.php
 /var/clearos/events/openldap_configuration/samba
 /var/clearos/events/openldap_online/samba
