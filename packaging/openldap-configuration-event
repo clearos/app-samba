@@ -7,6 +7,8 @@ if [ -e /var/clearos/samba/initialized_openldap ]; then
     # Seems to do some sort of LDAP sync, there's a better way no doubt
     /usr/bin/pdbedit -L -v >/dev/null 2>&1
 
+    # Give it a few seconds
+    sleep 10
     /sbin/service winbind condrestart
     /sbin/service nmb condrestart
     /sbin/service smb condrestart
