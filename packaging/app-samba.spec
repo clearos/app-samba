@@ -1,7 +1,7 @@
 
 Name: app-samba
 Epoch: 1
-Version: 1.6.2
+Version: 1.6.5
 Release: 1%{dist}
 Summary: Windows Networking
 License: GPLv3
