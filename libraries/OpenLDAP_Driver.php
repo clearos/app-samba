@@ -1086,7 +1086,8 @@ class OpenLDAP_Driver extends Engine
         //-------------
 
         try {
-            if ($samba->get_mode() === Samba::MODE_PDC) {
+            $samba_mode = $samba->get_mode();
+            if (($samba_mode === Samba::MODE_PDC) || ($samba_mode === Samba::MODE_SIMPLE_SERVER)) {
                 $this->cleanup_entries();
                 $this->cleanup_passwords();
             }
