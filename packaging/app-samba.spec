@@ -1,7 +1,7 @@
 
 Name: app-samba
 Epoch: 1
-Version: 1.6.5
+Version: 1.6.7
 Release: 1%{dist}
 Summary: Windows Networking
 License: GPLv3
@@ -35,9 +35,13 @@ Requires: app-samba-extension-core >= 1:1.4.11
 Requires: app-samba-common-core >= 1:1.4.70
 Requires: libtalloc
 Requires: samba-common >= 3.6.1
+Requires: samba-common < 4
 Requires: samba-client >= 3.6.1
+Requires: samba-client < 4
 Requires: samba-winbind >= 3.6.1
+Requires: samba-winbind < 4
 Requires: samba-winbind-clients >= 3.6.1
+Requires: samba-winbind-clients < 4
 Requires: system-mode-driver
 Requires: tdb-tools >= 1.2.9
 

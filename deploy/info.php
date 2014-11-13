@@ -5,7 +5,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 $app['basename'] = 'samba';
-$app['version'] = '1.6.5';
+$app['version'] = '1.6.7';
 $app['release'] = '1';
 $app['vendor'] = 'ClearFoundation';
 $app['packager'] = 'ClearFoundation';
@@ -61,9 +61,13 @@ $app['core_requires'] = array(
     'app-samba-common-core >= 1:1.4.70',
     'libtalloc',
     'samba-common >= 3.6.1',
+    'samba-common < 4',
     'samba-client >= 3.6.1',
+    'samba-client < 4',
     'samba-winbind >= 3.6.1',
+    'samba-winbind < 4',
     'samba-winbind-clients >= 3.6.1',
+    'samba-winbind-clients < 4',
     'system-mode-driver',
     'tdb-tools >= 1.2.9'
 );
