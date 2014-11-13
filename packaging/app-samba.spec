@@ -15,6 +15,7 @@ Requires: app-groups
 Requires: app-users
 Requires: app-network
 Requires: samba >= 3.6.1
+Requires: samba < 4
 
 %description
 Windows Networking provides the necessary glue to interoperate with Windows systems.  The app provides authentication services, file and print, along with Windows domain management.

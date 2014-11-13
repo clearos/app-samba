@@ -46,6 +46,7 @@ $app['requires'] = array(
     'app-users',
     'app-network',
     'samba >= 3.6.1',
+    'samba < 4',
 );
 
 // Note: explicit libtalloc and samba-common dependencies make yum happy
