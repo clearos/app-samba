@@ -1,9 +1,9 @@
 
 Name: app-samba
 Epoch: 1
-Version: 2.0.5
+Version: 2.0.14
 Release: 1%{dist}
-Summary: Windows Networking
+Summary: Windows Networking (Samba)
 License: GPLv3
 Group: ClearOS/Apps
 Source: %{name}-%{version}.tar.gz
@@ -17,10 +17,10 @@ Requires: app-network
 Requires: samba >= 3.6.1
 
 %description
-Windows Networking provides the necessary glue to interoperate with Windows systems.  The app provides authentication services, file and print, along with Windows domain management.
+Windows Networking (Samba) provides the necessary glue to interoperate with Windows systems.  The app provides authentication services, file and print, along with Windows domain management.
 
 %package core
-Summary: Windows Networking - Core
+Summary: Windows Networking (Samba) - Core
 License: LGPLv3
 Group: ClearOS/Libraries
 Provides: system-windows-driver
@@ -42,7 +42,7 @@ Requires: system-mode-driver
 Requires: tdb-tools >= 1.2.9
 
 %description core
-Windows Networking provides the necessary glue to interoperate with Windows systems.  The app provides authentication services, file and print, along with Windows domain management.
+Windows Networking (Samba) provides the necessary glue to interoperate with Windows systems.  The app provides authentication services, file and print, along with Windows domain management.
 
 This package provides the core API and libraries.
 
