@@ -155,7 +155,7 @@ class Mode extends ClearOS_Controller
                 'G:', 'H:', 'I:', 'J:', 'K:', 'L:', 'M:', 'N:', 'O:', 'P:', 'Q:', 'R:', 'S:', 'T:', 'U:', 'V:', 'W:', 'X:', 'Y:', 'Z:'
             );
 
-	    if ($data['mode'] === Samba::MODE_AD_CONNECTOR)
+            if ($data['mode'] === Samba::MODE_AD_CONNECTOR)
                 $data['domain'] = $this->samba->get_workgroup();
             else
                 $data['domain'] = $this->openldap_driver->get_domain();
