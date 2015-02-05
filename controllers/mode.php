@@ -132,7 +132,6 @@ class Mode extends ClearOS_Controller
                 }
 
                 $this->samba->set_mode($this->input->post('mode'));
-                // $this->samba->set_workgroup($this->input->post('domain'));
                 $this->openldap_driver->set_domain($this->input->post('domain'));
 
                 $this->page->set_status_updated();
@@ -149,13 +148,17 @@ class Mode extends ClearOS_Controller
         try {
             $data['form_type'] = $form_type;
             $data['mode'] = $this->samba->get_mode();
-            $data['domain'] = $this->openldap_driver->get_domain();
             $data['profiles'] = $this->samba->get_roaming_profiles_state();
             $data['logon_script'] = $this->samba->get_logon_script();
             $data['logon_drive'] = $this->samba->get_logon_drive();
             $data['logon_drives'] = array(
                 'G:', 'H:', 'I:', 'J:', 'K:', 'L:', 'M:', 'N:', 'O:', 'P:', 'Q:', 'R:', 'S:', 'T:', 'U:', 'V:', 'W:', 'X:', 'Y:', 'Z:'
             );
+
+            if ($data['mode'] === Samba::MODE_AD_CONNECTOR)
+                $data['domain'] = $this->samba->get_workgroup();
+            else
+                $data['domain'] = $this->openldap_driver->get_domain();
 
             $master_modes = array(
                 Samba::MODE_PDC => lang('samba_common_pdc'),
