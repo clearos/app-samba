@@ -58,4 +58,4 @@ fi
 #-----------
 
 /var/clearos/events/network_configuration/samba_common
-/var/clearos/events/openldap_online/samba
+/var/clearos/events/openldap_online/samba >/dev/null
