@@ -79,7 +79,7 @@ class Server extends Daemon
 
         $this->lang->load('base');
 
-        $data['daemon_name'] = lang('samba_app_name');
+        $data['daemon_name'] = 'samba';
         $data['app_name'] = 'samba';
 
         // Load views
