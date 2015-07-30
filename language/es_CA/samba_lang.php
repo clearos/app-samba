@@ -3,8 +3,8 @@
 // http://www.clearfoundation.com/docs/developer/translations/
 
 $lang['samba_administrator_account'] = 'Administrator Account';
-$lang['samba_app_description'] = 'Windows Networking provides the necessary glue to interoperate with Windows systems.  The app provides authentication services, file and print, along with Windows domain management.';
-$lang['samba_app_name'] = 'Windows Networking';
+$lang['samba_app_description'] = 'Windows Networking (Samba) provides the necessary glue to interoperate with Windows systems.  The app provides authentication services, file and print, along with Windows domain management.';
+$lang['samba_app_name'] = 'Windows Networking (Samba)';
 $lang['samba_computers'] = 'Computers';
 $lang['samba_driver_has_not_been_initialized'] = 'Driver has not been initialized.';
 $lang['samba_file_share_tooltip'] = 'If you would like to create network file shares, please use the Flexshare app.';
