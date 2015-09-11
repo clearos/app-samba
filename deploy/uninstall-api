@@ -1,0 +1,35 @@
+#!/usr/clearos/sandbox/usr/bin/php
+<?php
+
+///////////////////////////////////////////////////////////////////////////////
+// B O O T S T R A P
+///////////////////////////////////////////////////////////////////////////////
+
+$bootstrap = getenv('CLEAROS_BOOTSTRAP') ? getenv('CLEAROS_BOOTSTRAP') : '/usr/clearos/framework/shared';
+require_once $bootstrap . '/bootstrap.php';
+
+///////////////////////////////////////////////////////////////////////////////
+// D E P E N D E N C I E S
+///////////////////////////////////////////////////////////////////////////////
+
+use \Exception as Exception;
+
+///////////////////////////////////////////////////////////////////////////////
+// M A I N
+///////////////////////////////////////////////////////////////////////////////
+
+if (!clearos_library_installed('flexshare/Flexshare'))
+    exit(0);
+
+clearos_load_library('flexshare/Flexshare');
+
+$flexshare = new \clearos\apps\flexshare\Flexshare();
+
+try { 
+    $shares = $flexshare->get_share_summary(FALSE);
+
+    foreach ($shares as $share => $details)
+        $flexshare->set_file_enabled($details['Name'], FALSE);
+} catch (Exception $e) {
+    // Not fatal
+}
