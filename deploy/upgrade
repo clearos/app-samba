@@ -54,6 +54,16 @@ if [ ! -e /var/clearos/samba/unix_password_sync ]; then
     touch /var/clearos/samba/unix_password_sync
 fi
 
+
+# Disable old smb ports parameter
+#--------------------------------
+
+CHECK=`grep "^smb[[:space:]]*ports" /etc/samba/smb.conf`
+if [ -n "$CHECK" ]; then
+    logger -p local6.notice -t installer "app-samba-core - disabling explicit smb ports"
+    sed -i -e '/^smb[[:space:]]*ports.*/d' /etc/samba/smb.conf
+fi
+
 # Run events
 #-----------
 
