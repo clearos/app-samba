@@ -1,4 +1,4 @@
-#!/bin/sh -x
+#!/bin/sh
 
 if [ -e /var/clearos/samba/initialized_openldap ]; then
     /usr/clearos/apps/samba/deploy/cleanup-ldap
