@@ -60,7 +60,7 @@ class Samba extends ClearOS_Controller
         // Show warning if Samba 4 is installed
         //-------------------------------------
 
-        if (file_exists('/usr/bin/samba-tool')) {
+        if (file_exists('/usr/clearos/apps/samba_directory/deploy/info.php')) {
             $this->page->view_form('samba/samba4', $data, lang('samba_app_name'));
             return;
         }
