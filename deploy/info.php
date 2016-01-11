@@ -5,7 +5,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 $app['basename'] = 'samba';
-$app['version'] = '2.2.0';
+$app['version'] = '2.2.1';
 $app['release'] = '1';
 $app['vendor'] = 'ClearFoundation';
 $app['packager'] = 'ClearFoundation';
@@ -45,7 +45,7 @@ $app['requires'] = array(
     'app-groups',
     'app-users',
     'app-network',
-    'samba >= 3.6.1',
+    'samba >= 4.2.3',
 );
 
 // Note: explicit libtalloc and samba-common dependencies make yum happy

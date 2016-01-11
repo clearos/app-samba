@@ -2379,7 +2379,7 @@ class OpenLDAP_Driver extends Engine
         $options['stdin'] = TRUE;
 
         $shell = new Shell();
-        $exitcode = $shell->Execute(self::COMMAND_NET, "idmap secret '*' $password", TRUE, $options);
+        $exitcode = $shell->execute(self::COMMAND_NET, "idmap set secret '*' $password", TRUe, $options);
     }
 
     /**
