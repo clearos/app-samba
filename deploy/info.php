@@ -5,7 +5,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 $app['basename'] = 'samba';
-$app['version'] = '2.2.2';
+$app['version'] = '2.2.20';
 $app['release'] = '1';
 $app['vendor'] = 'ClearFoundation';
 $app['packager'] = 'ClearFoundation';
@@ -58,7 +58,7 @@ $app['core_requires'] = array(
     'app-openldap-core >= 1:1.5.40', 
     'app-openldap-directory-core', 
     'app-samba-extension-core >= 1:1.4.11',
-    'app-samba-common-core >= 1:1.4.70',
+    'app-samba-common-core >= 1:2.2.20',
     'libtalloc',
     'samba-common >= 3.6.1',
     'samba-client >= 3.6.1',

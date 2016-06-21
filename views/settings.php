@@ -72,6 +72,7 @@ echo field_input('comment', $comment, lang('samba_common_server_comment'), $read
 if ($show_printing)
     echo field_dropdown('printing', $printing_options, $printing, lang('samba_common_printing'), $read_only);
 echo field_toggle_enable_disable('homes', $homes, lang('samba_common_home_directories'), $read_only);
+echo field_toggle_enable_disable('win10_support', $win10_support, lang('samba_common_windows_10_support'), $read_only);
 echo field_toggle_enable_disable('wins_support', $wins_support, lang('samba_common_wins_support'), $read_only);
 echo field_input('wins_server', $wins_server, lang('samba_common_wins_server'), $read_only);
 
