@@ -111,7 +111,7 @@ class Initialization extends ClearOS_Controller
         $this->form_validation->set_policy('domain', 'samba_common/Samba', 'validate_workgroup', TRUE);
         $this->form_validation->set_policy('password', 'samba_common/Samba', 'validate_password', TRUE);
 
-    $mode = $this->mode->get_mode();
+        $mode = $this->mode->get_mode();
 
         if ($mode !== Mode_Engine::MODE_SLAVE)
             $this->form_validation->set_policy('verify', 'samba_common/Samba', 'validate_password', TRUE);
