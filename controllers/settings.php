@@ -111,6 +111,7 @@ class Settings extends ClearOS_Controller
         $this->form_validation->set_policy('homes', 'samba_common/Samba', 'validate_homes_state', TRUE);
         $this->form_validation->set_policy('wins_support', 'samba_common/Samba', 'validate_wins_support');
         $this->form_validation->set_policy('wins_server', 'samba_common/Samba', 'validate_wins_server');
+        $this->form_validation->set_policy('win10_support', 'samba_common/Samba', 'validate_windows_10_support');
 
         if ($this->input->post('printing'))
             $this->form_validation->set_policy('printing', 'samba_common/Samba', 'validate_server_string', TRUE);
@@ -127,6 +128,7 @@ class Settings extends ClearOS_Controller
                 $this->samba->set_server_string($this->input->post('comment'));
                 $this->samba->set_printing_mode($this->input->post('printing'));
                 $this->samba->set_homes_state($this->input->post('homes'));
+                $this->samba->set_windows_10_support($this->input->post('win10_support'));
                 $this->samba->set_wins_server_and_support(
                     $this->input->post('wins_server'),
                     $this->input->post('wins_support')
@@ -151,7 +153,7 @@ class Settings extends ClearOS_Controller
             $data['homes'] = $this->samba->get_homes_state();
             $data['wins_support'] = $this->samba->get_wins_support();
             $data['wins_server'] = $this->samba->get_wins_server();
-
+            $data['win10_support'] = $this->samba->get_windows_10_support();
             $data['show_printing'] = clearos_app_installed('print_server') ? TRUE : FALSE;
             $data['printing'] = $this->samba->get_printing_mode();
             $data['printing_options'] = $this->samba->get_printing_modes();
