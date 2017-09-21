@@ -83,6 +83,15 @@ if [ -n "$CHECK" ]; then
     sed -i -e '/^syslog[[:space:]]*=.*/d' /etc/samba/smb.conf
 fi
 
+# Remove deprecated "force directory security mode" option
+#---------------------------------------------------------
+
+CHECK=`grep "^[[:space:]]*force directory security mode[[:space:]]*=" /etc/samba/smb.conf`
+if [ -n "$CHECK" ]; then
+    logger -p local6.notice -t installer "app-samba-core - removing deprecated directory mode parameter"
+    sed -i -e '/^[[:space:]]*force directory security mode[[:space:]]*=.*/d' /etc/samba/smb.conf
+fi
+
 # Run events
 #-----------
 
