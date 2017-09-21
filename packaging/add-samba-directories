@@ -1,24 +1,43 @@
 #!/bin/sh
 
-WINADMIN=`getent passwd winadmin`
-DOMUSERS=`getent group domain_users`
+DRIVER=`grep "^driver[[:space:]]*=[[:space:]]*" /var/clearos/accounts/config 2>/dev/null | sed 's/.*=[[:space:]]*//'`
 
-if ( [ -z "$WINADMIN" ] || [ -z "$DOMUSERS" ] ); then
-	exit 1
+if [ "$DRIVER" == "openldap_directory" ]; then
+	WINADMIN_CHECK=`getent passwd winadmin`
+	DOMUSERS_CHECK=`getent group domain_users`
+
+	if ( [ -z "$WINADMIN_CHECK" ] || [ -z "$DOMUSERS_CHECK" ] ); then
+		exit 1
+	fi
+
+	WINADMIN="winadmin"
+	DOMUSERS="domain_users"
+elif [ "$DRIVER" == "active_directory" ]; then
+	WINADMIN_CHECK=`getent passwd administrator`
+	DOMUSERS_CHECK=`getent group "domain users"`
+
+	if ( [ -z "$WINADMIN_CHECK" ] || [ -z "$DOMUSERS_CHECK" ] ); then
+		exit 1
+	fi
+
+	WINADMIN="administrator"
+	DOMUSERS="domain users"
 fi
 
 DIRS="\
-/var/samba/netlogon|winadmin|domain_users|2755 \
-/var/samba/profiles|winadmin|domain_users|2775 \
-/var/samba/drivers|winadmin|domain_users|2755 \
-/var/samba/drivers/IA64|winadmin|domain_users|2755 \
-/var/samba/drivers/W32ALPHA|winadmin|domain_users|2755 \
-/var/samba/drivers/W32MIPS|winadmin|domain_users|2755 \
-/var/samba/drivers/W32PPC|winadmin|domain_users|2755 \
-/var/samba/drivers/W32X86|winadmin|domain_users|2755 \
-/var/samba/drivers/WIN40|winadmin|domain_users|2755 \
-/var/samba/drivers/x64|winadmin|domain_users|2755 \
+/var/samba/netlogon|$WINADMIN|$DOMUSERS|2755
+/var/samba/profiles|$WINADMIN|$DOMUSERS|2775
+/var/samba/drivers|$WINADMIN|$DOMUSERS|2755
+/var/samba/drivers/IA64|$WINADMIN|$DOMUSERS|2755
+/var/samba/drivers/W32ALPHA|$WINADMIN|$DOMUSERS|2755
+/var/samba/drivers/W32MIPS|$WINADMIN|$DOMUSERS|2755
+/var/samba/drivers/W32PPC|$WINADMIN|$DOMUSERS|2755
+/var/samba/drivers/W32X86|$WINADMIN|$DOMUSERS|2755
+/var/samba/drivers/WIN40|$WINADMIN|$DOMUSERS|2755
+/var/samba/drivers/x64|$WINADMIN|$DOMUSERS|2755
 "
+
+IFS=$'\n'
 
 for DIRINFO in $DIRS; do
 	DIR=`echo $DIRINFO | cut -d '|' -f 1`
@@ -30,16 +49,16 @@ for DIRINFO in $DIRS; do
 		FILEPERMS=`stat --format=%a $DIR`
 		if [ "$FILEPERMS" != "$PERMS" ]; then
 			logger -p local6.notice -t samba "fixing broken directory permissions on $DIR"
-			chmod $PERMS $DIR
+			chmod $PERMS "$DIR"
 		fi
 
 		FILEOWNERSHIP=`stat --format=%U.%G $DIR`
 		if [ "$FILEOWNERSHIP" != "$OWNER.$GROUP" ]; then
 			logger -p local6.notice -t samba "fixing broken directory ownership on $DIR"
-			chown $OWNER.$GROUP $DIR
+			chown "$OWNER.$GROUP" "$DIR"
 		fi
 	else
 		logger -p local6.notice -t samba "adding samba directory: $DIR"
-		install -m $PERMS -o $OWNER -g $GROUP -d $DIR
+		install -m "$PERMS" -o "$OWNER" -g "$GROUP" -d "$DIR"
 	fi
 done
