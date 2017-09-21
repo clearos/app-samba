@@ -74,6 +74,15 @@ if [ -n "$CHECK" ]; then
     sed -i -e '/^smb[[:space:]]*ports.*/d' /etc/samba/smb.conf
 fi
 
+# Remove deprecated syslog option
+#--------------------------------
+
+CHECK=`grep "^syslog[[:space:]]*=" /etc/samba/smb.conf`
+if [ -n "$CHECK" ]; then
+    logger -p local6.notice -t installer "app-samba-core - removing deprecated syslog parameter"
+    sed -i -e '/^syslog[[:space:]]*=.*/d' /etc/samba/smb.conf
+fi
+
 # Run events
 #-----------
 
