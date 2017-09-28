@@ -92,6 +92,15 @@ if [ -n "$CHECK" ]; then
     sed -i -e '/^[[:space:]]*force directory security mode[[:space:]]*=.*/d' /etc/samba/smb.conf
 fi
 
+# Handle RID idmap config changes
+#--------------------------------
+
+CHECK=`grep "^driver[[:space:]]*=[[:space:]]active_directory" /var/clearos/accounts/config`
+if ( [ -n "$CHECK" ] && [ ! -e /var/clearos/samba/idmap_rid_update ] ); then
+    echo "fix rid man"
+    touch /var/clearos/samba/idmap_rid_update
+fi
+
 # Run events
 #-----------
 

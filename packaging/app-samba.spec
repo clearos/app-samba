@@ -1,7 +1,7 @@
 
 Name: app-samba
 Epoch: 1
-Version: 2.4.0
+Version: 2.4.2
 Release: 1%{dist}
 Summary: Windows Networking (Samba)
 License: GPLv3
@@ -32,12 +32,12 @@ Requires: app-network-core
 Requires: app-openldap-core >= 1:1.5.40
 Requires: app-openldap-directory-core
 Requires: app-samba-extension-core >= 1:1.4.11
-Requires: app-samba-common-core >= 1:2.2.20
+Requires: app-samba-common-core >= 1:2.4.0
 Requires: libtalloc
-Requires: samba-common >= 3.6.1
-Requires: samba-client >= 3.6.1
-Requires: samba-winbind >= 3.6.1
-Requires: samba-winbind-clients >= 3.6.1
+Requires: samba-common >= 4.6.2
+Requires: samba-client >= 4.6.2
+Requires: samba-winbind >= 4.6.2
+Requires: samba-winbind-clients >= 4.6.2
 Requires: system-mode-driver
 Requires: tdb-tools >= 1.2.9
 
