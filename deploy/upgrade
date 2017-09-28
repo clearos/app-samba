@@ -97,8 +97,10 @@ fi
 
 CHECK=`grep "^driver[[:space:]]*=[[:space:]]active_directory" /var/clearos/accounts/config`
 if ( [ -n "$CHECK" ] && [ ! -e /var/clearos/samba/idmap_rid_update ] ); then
-    echo "fix rid man"
+    /usr/clearos/apps/samba/deploy/idmap-rid-update >/dev/null 2>&1
     touch /var/clearos/samba/idmap_rid_update
+    service winbind restart
+    sleep 5
 fi
 
 # Run events
