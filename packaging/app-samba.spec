@@ -1,7 +1,7 @@
 
 Name: app-samba
 Epoch: 1
-Version: 3.4.3
+Version: 3.4.4
 Release: 1%{dist}
 Summary: Windows Networking (Samba)
 License: GPLv3
@@ -14,7 +14,7 @@ Requires: app-accounts
 Requires: app-groups
 Requires: app-users
 Requires: app-network
-Requires: samba >= 4.2.3
+Requires: samba >= 4.6.2
 
 %description
 Windows Networking (Samba) provides the necessary glue to interoperate with Windows systems.  The app provides authentication services, file and print, along with Windows domain management.
