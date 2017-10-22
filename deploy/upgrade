@@ -64,6 +64,17 @@ if [ ! -e /var/clearos/samba/unix_password_sync ]; then
     touch /var/clearos/samba/unix_password_sync
 fi
 
+# Revert ntlm auth behavior back to Samba 4.4 default
+#----------------------------------------------------
+
+CHECK=`grep "^ntlm auth[[:space:]]*=" /etc/samba/smb.conf 2>/dev/null`
+
+if [ -z "$CHECK" ]; then
+    logger -p local6.notice -t installer "app-samba-core - reverting ntlm auth default"
+    sed -i -e "s/global\]/global\]\nntlm auth = yes/" /etc/samba/smb.conf
+    service winbind condrestart >/dev/null 2>&1
+    sleep 3
+fi
 
 # Disable old smb ports parameter
 #--------------------------------
