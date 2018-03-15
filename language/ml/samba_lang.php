@@ -1,13 +1,13 @@
 <?php
 
-$lang['samba_administrator_account'] = 'അഡ്മിനിസ്ട്രേറ്റർ അക്കൌണ്ട്';
-$lang['samba_app_description'] = 'Windows നെറ്റ്വർക്കിങ് (സാംബാ) വിൻഡോസ് സിസ്റ്റങ്ങളിൽ പരസ്പരം ആവശ്യമായ പശ നൽകുന്നു. അപ്ലിക്കേഷൻ വിൻഡോസ് ഡൊമെയിൻ മാനേജ്മെന്റ് ചേർന്ന് ആധികാരികത, ഫയൽ പ്രിന്റ് നൽകുന്നു.';
-$lang['samba_app_name'] = 'Windows നെറ്റ്വർക്കിങ് (സാംബാ)';
-$lang['samba_computers'] = 'കംപ്യൂട്ടർ';
-$lang['samba_driver_has_not_been_initialized'] = 'ഡ്രൈവർ ആരംഭിച്ചു ചെയ്തിട്ടില്ല.';
-$lang['samba_file_share_tooltip'] = 'നിങ്ങൾ നെറ്റ്വർക്ക് ഫയൽ ഓഹരികൾ സൃഷ്ടിക്കാൻ താൽപ്പര്യമുണ്ടെങ്കിൽ, Flexshare അപ്ലിക്കേഷൻ ഉപയോഗിക്കുക.';
-$lang['samba_initializing_core_system'] = 'കോർ സിസ്റ്റം ആരംഭിക്കുന്നു, ദയവായി ക്ഷമയോടെ.';
-$lang['samba_initializing_warning'] = 'ഇനീഷ്യലൈസേഷന് ഒന്നോ രണ്ടോ മിനിട്ട് എടുത്തേക്കാം, ദയവായി ക്ഷമയോടെ.';
-$lang['samba_master_node_needs_initialization'] = 'മാസ്റ്റർ നോഡ് മുന്നോട്ടുപോകുന്നതിന് മുമ്പ് ഇനിഷ്യലൈസ് ആവശ്യമുണ്ട്.';
-$lang['samba_mode'] = 'മോഡ്';
-$lang['samba_samba_directory_installed_warning'] = 'സാംബാ ഡയറക്ടറി സോഫ്റ്റ്വെയർ ഇൻസ്റ്റാൾ, അങ്ങനെ നീ ഇനി ഈ അപ്ലിക്കേഷൻ ആവശ്യമാണ്.';
+$lang['samba_administrator_account'] = 'അഡ്മിനിസ്ട്രേറ്റർ അക്കൗണ്ട്';
+$lang['samba_app_description'] = 'വിൻഡോസ് നെറ്റ്വർക്കിങ് (സാംബ) വിൻഡോസ് സംവിധാനങ്ങളോടൊപ്പം പരസ്പരം പ്രവർത്തിയ്ക്കുന്നതിനുള്ള ഗ്ലൂ നല്കുന്നു. വിൻഡോസ് ഡൊമെയിൻ മാനേജ്മെന്റിനൊപ്പം ആധികാരികത ഉറപ്പാക്കൽ സേവനങ്ങൾ, ഫയൽ, പ്രിന്റ് എന്നിവ ഈ ആപ്ലിക്കേഷൻ നൽകുന്നു.';
+$lang['samba_app_name'] = 'വിൻഡോസ് നെറ്റ്വർക്കിങ് (സാംബ)';
+$lang['samba_computers'] = 'കമ്പ്യൂട്ടറുകൾ';
+$lang['samba_driver_has_not_been_initialized'] = 'ഡ്രൈവർ ആരംഭിച്ചിട്ടില്ല.';
+$lang['samba_file_share_tooltip'] = 'നിങ്ങൾ നെറ്റ്വർക്ക് ഫയൽ പങ്കിടാൻ ആഗ്രഹിക്കുന്നു എങ്കിൽ, Flexshare അപ്ലിക്കേഷൻ ഉപയോഗിക്കുക.';
+$lang['samba_initializing_core_system'] = 'കോർ സിസ്റ്റം സംവിധാനപ്പെടുത്തുക, ക്ഷമയോടെ കാത്തിരിക്കുക.';
+$lang['samba_initializing_warning'] = 'തുടക്കത്തിൽ ഒന്നോ രണ്ടോ എടുത്തേക്കാം, ദയവായി ക്ഷമയോടെ കാത്തിരിക്കുക.';
+$lang['samba_master_node_needs_initialization'] = 'മുന്നോട്ടു പോകുന്നതിനു മുമ്പു് മാസ്റ്റര് നോഡ് ആരംഭിയ്ക്കേണ്ടതുണ്ടു്.';
+$lang['samba_mode'] = 'മോഡ്';
+$lang['samba_samba_directory_installed_warning'] = 'Samba ഡയറക്ടറി സോഫ്റ്റ്വെയർ ഇൻസ്റ്റാൾ ചെയ്തു, അതിനാൽ ഈ അപ്ലിക്കേഷൻ ഇനി നിങ്ങൾക്ക് ആവശ്യമില്ല.';
