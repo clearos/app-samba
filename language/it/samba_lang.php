@@ -1,13 +1,13 @@
 <?php
 
-$lang['samba_administrator_account'] = 'Administrator account';
-$lang['samba_app_description'] = 'Windows Networking (Samba) fornisce il collante necessario per interoperare con i sistemi Windows. L&#39;applicazione fornisce servizi di autenticazione, di file e stampa, insieme con la gestione del dominio di Windows.';
+$lang['samba_administrator_account'] = 'Account amministratore';
+$lang['samba_app_description'] = 'Windows Networking (Samba) fornisce la colla necessaria per interoperare con i sistemi Windows. L&#39;app fornisce servizi di autenticazione, file e stampa, insieme alla gestione dei domini di Windows.';
 $lang['samba_app_name'] = 'Windows Networking (Samba)';
-$lang['samba_computers'] = 'computer';
+$lang['samba_computers'] = 'computers';
 $lang['samba_driver_has_not_been_initialized'] = 'Il driver non è stato inizializzato.';
-$lang['samba_file_share_tooltip'] = 'Se si desidera creare condivisioni di file di rete, si prega di utilizzare l&#39;applicazione FlexShare.';
-$lang['samba_initializing_core_system'] = 'L&#39;inizializzazione del sistema di base, si prega di essere paziente.';
-$lang['samba_initializing_warning'] = 'L&#39;inizializzazione può richiedere uno o due minuti, si prega di essere paziente.';
-$lang['samba_master_node_needs_initialization'] = 'nodo master deve essere inizializzato prima di procedere.';
+$lang['samba_file_share_tooltip'] = 'Se desideri creare condivisioni di file di rete, utilizza l&#39;app Flexshare.';
+$lang['samba_initializing_core_system'] = 'Inizializzando il sistema principale, sii paziente.';
+$lang['samba_initializing_warning'] = 'L&#39;inizializzazione può richiedere un minuto o due, per favore sii paziente.';
+$lang['samba_master_node_needs_initialization'] = 'Il nodo principale deve essere inizializzato prima di procedere.';
 $lang['samba_mode'] = 'Modalità';
-$lang['samba_samba_directory_installed_warning'] = 'Il software Directory Samba è installato, quindi non è più necessario questo app.';
+$lang['samba_samba_directory_installed_warning'] = 'Il software Samba Directory è installato, quindi non hai più bisogno di questa app.';
