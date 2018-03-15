@@ -1,13 +1,13 @@
 <?php
 
-$lang['samba_administrator_account'] = 'Administrator Account';
-$lang['samba_app_description'] = 'Windows Networking (Samba) na-enye ndị dị mkpa mama ka interoperate na Windows usoro. The ngwa na-enye Nyocha ọrụ, faịlụ na-ebipụta, tinyere Windows domain management.';
-$lang['samba_app_name'] = 'Windows Networking (Samba)';
-$lang['samba_computers'] = 'Computers';
-$lang['samba_driver_has_not_been_initialized'] = 'Driver bụghị e initialized.';
-$lang['samba_file_share_tooltip'] = 'Ọ bụrụ na ị ga-achọ ka ịmepụta netwọk file mbak, biko jiri Flexshare ngwa.';
-$lang['samba_initializing_core_system'] = 'Initializing isi usoro, biko na-enwe ndidi.';
-$lang['samba_initializing_warning'] = 'Initialization nwere ike iwe nkeji ma ọ bụ abụọ, biko na-enwe ndidi.';
-$lang['samba_master_node_needs_initialization'] = 'Master ọnụ kwesịrị ka a initialized tupu ya etinyewe.';
-$lang['samba_mode'] = 'mode';
-$lang['samba_samba_directory_installed_warning'] = 'The Samba Directory software arụnyere, otú ị na-adịkwaghị mkpa a na ngwa.';
+$lang['samba_administrator_account'] = 'Akaụntụ Nchịkwa';
+$lang['samba_app_description'] = 'Sistemụ Windows (Samba) na-enye ntụpọ dị mkpa iji soro Windows rụọ ọrụ. Ngwa ahụ na-enye ọrụ nyocha ọrụ, faịlụ na ibipụta, yana njikwa ngalaba Windows.';
+$lang['samba_app_name'] = 'Sistemụ Windows (Samba)';
+$lang['samba_computers'] = 'Kọmputa';
+$lang['samba_driver_has_not_been_initialized'] = 'Ebubeghị onye ọkwọ ụgbọ ala.';
+$lang['samba_file_share_tooltip'] = 'Ọ bụrụ na ịchọrọ ịmepụta faịlụ netwọk netwọk, biko jiri ngwa Flexshare.';
+$lang['samba_initializing_core_system'] = 'Ịtọ ntọala usoro, biko nwee ndidi.';
+$lang['samba_initializing_warning'] = 'Initialization nwere ike were nkeji ma ọ bụ abụọ, biko nwee ndidi.';
+$lang['samba_master_node_needs_initialization'] = 'A ghaghị ịmalite igodo nnabata tupu ị gawa.';
+$lang['samba_mode'] = 'Ọnọdụ';
+$lang['samba_samba_directory_installed_warning'] = 'E tinyewo ngwanrọ ndekọ Samba, n&#39;ihi ya, ị gakwaghị achọ ngwa a.';
