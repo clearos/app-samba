@@ -1,13 +1,13 @@
 <?php
 
-$lang['samba_administrator_account'] = 'Račun Administrator';
-$lang['samba_app_description'] = 'Windows mreže (Samba) osigurava potrebnu ljepilo za interoperabilnost s Windows sustavima. Aplikacija pruža usluge za autorizaciju, datoteka i ispis, zajedno sa sustavom Windows upravljanje domenama.';
-$lang['samba_app_name'] = 'Windows mreže (Samba)';
-$lang['samba_computers'] = 'Računala';
-$lang['samba_driver_has_not_been_initialized'] = 'Vozač nije pokrenut.';
-$lang['samba_file_share_tooltip'] = 'Ako želite stvoriti mrežni datotečni dionica, molimo vas da koristite aplikaciju Flexshare.';
-$lang['samba_initializing_core_system'] = 'Inicijalizacija jezgre sustava, budite strpljivi.';
-$lang['samba_initializing_warning'] = 'Inicijalizacija svibanj uzeti minutu ili dvije, budite strpljivi.';
-$lang['samba_master_node_needs_initialization'] = 'Master čvor treba pokrenuti prije nastavka.';
+$lang['samba_administrator_account'] = 'Administratorski račun';
+$lang['samba_app_description'] = 'Windows Networking (Samba) pruža potrebnu ljepilu za interoperabilnost s Windows sustavima. Aplikacija pruža usluge provjere autentičnosti, datoteku i ispis, zajedno s upravljanjem domene sustava Windows.';
+$lang['samba_app_name'] = 'Umrežavanje sustava Windows (Samba)';
+$lang['samba_computers'] = 'računala';
+$lang['samba_driver_has_not_been_initialized'] = 'Vozač nije inicijaliziran.';
+$lang['samba_file_share_tooltip'] = 'Ako želite stvoriti dionice mrežnih datoteka, upotrijebite aplikaciju Flexshare.';
+$lang['samba_initializing_core_system'] = 'Inicijalizacija jezgrenog sustava, budite strpljivi.';
+$lang['samba_initializing_warning'] = 'Inicijalizacija može potrajati minutu ili dvije, budite strpljivi.';
+$lang['samba_master_node_needs_initialization'] = 'Prije nastavka potrebno je inicijalizirati glavni čvor.';
 $lang['samba_mode'] = 'način';
-$lang['samba_samba_directory_installed_warning'] = 'Samba katalog softver instaliran, tako da više ne morate tu aplikaciju.';
+$lang['samba_samba_directory_installed_warning'] = 'Instaliran je softver Samba Directory, tako da više ne trebate ovu aplikaciju.';
