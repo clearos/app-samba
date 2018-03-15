@@ -1,13 +1,13 @@
 <?php
 
 $lang['samba_administrator_account'] = 'प्रशासक खाते';
-$lang['samba_app_description'] = 'विंडोज नेटवर्किंग (Samba) Windows प्रणालीशी आंतरसंचालित आवश्यक सरस उपलब्ध आहे. अनुप्रयोग विंडोज डोमेन व्यवस्थापन सोबत ऑथेंटिकेशन सर्व्हिसेस्, फाईल प्रिंट उपलब्ध आहे.';
-$lang['samba_app_name'] = 'विंडोज नेटवर्किंग (Samba)';
+$lang['samba_app_description'] = 'विंडोज नेटवर्किंग (साम्बा) विंडोज सिस्टीमसह इंटरऑपरेट करण्यासाठी आवश्यक गोंद प्रदान करते. अॅप विंडोज डोमेन व्यवस्थापनसह प्रमाणीकरण सेवा, फाईल आणि प्रिंट प्रदान करते.';
+$lang['samba_app_name'] = 'विंडोज नेटवर्किंग (सांबा)';
 $lang['samba_computers'] = 'संगणक';
-$lang['samba_driver_has_not_been_initialized'] = 'ड्राइव्हर आरंभ केले गेले नाही.';
-$lang['samba_file_share_tooltip'] = 'आपण नेटवर्क फाइल शेअर तयार करू इच्छित असल्यास, कृपया Flexshare अॅप वापरा.';
-$lang['samba_initializing_core_system'] = 'कोर यंत्रणा सुरू करणे, कृपया धीर धरा.';
-$lang['samba_initializing_warning'] = 'आरंभ करण्यात एक किंवा दोन मिनिटे लागू शकतात, कृपया धीर धरा.';
-$lang['samba_master_node_needs_initialization'] = 'मास्टर नोड पुढे जाण्यापूर्वी सुरू करणे आवश्यक आहे.';
+$lang['samba_driver_has_not_been_initialized'] = 'ड्रायव्हर सुरु झाला नाही.';
+$lang['samba_file_share_tooltip'] = 'आपण नेटवर्क फाइल शेअर तयार करू इच्छित असल्यास, कृपया Flexshare अॅप वापरा';
+$lang['samba_initializing_core_system'] = 'कोर प्रणाली प्रारंभ करीत आहे, कृपया धीर धरा.';
+$lang['samba_initializing_warning'] = 'आरंभ करण्यास एक किंवा दोन मिनिटे लागू शकतात, कृपया धीर धरा.';
+$lang['samba_master_node_needs_initialization'] = 'पुढे जाण्यापूर्वी मास्टर नोड ला प्रारंभ करणे आवश्यक आहे.';
 $lang['samba_mode'] = 'मोड';
-$lang['samba_samba_directory_installed_warning'] = 'म्हणून आपल्याला यापुढे हा अनुप्रयोग गरज सांबा निर्देशिका सॉफ्टवेअर, स्थापित केले आहे.';
+$lang['samba_samba_directory_installed_warning'] = 'Samba निर्देशिका सॉफ्टवेअर स्थापित आहे, म्हणून आपल्याला यापुढे या अॅपची आवश्यकता नाही';
