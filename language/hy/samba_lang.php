@@ -1,13 +1,13 @@
 <?php
 
-$lang['samba_administrator_account'] = 'Administrator Հաշվի';
-$lang['samba_app_description'] = 'Windows Networking (սամբա) ապահովում է անհրաժեշտ սոսինձ interoperate հետ Windows համակարգերի. Հավելվածը տրամադրում իսկությունը ծառայություններ, ֆայլի եւ տպագիր, հետ Windows տիրույթի կառավարման.';
-$lang['samba_app_name'] = 'Windows Networking (Samba)';
+$lang['samba_administrator_account'] = 'Ադմինիստրատոր Հաշիվ';
+$lang['samba_app_description'] = 'Windows- ի ցանցային ցանցը (Samba) ապահովում է Windows- ի համակարգերի հետ աշխատելու համար անհրաժեշտ սոսինձ: Ծրագիրը ապահովում է նույնականացման ծառայություններ, ֆայլ եւ տպագիր, ինչպես նաեւ Windows տիրույթի կառավարման:';
+$lang['samba_app_name'] = 'Windows- ի ցանցեր (Samba)';
 $lang['samba_computers'] = 'Համակարգիչներ';
-$lang['samba_driver_has_not_been_initialized'] = 'Վարորդ չի եղել սկզբնավորված:';
-$lang['samba_file_share_tooltip'] = 'Եթե ​​դուք ցանկանում եք ստեղծել, ցանցային ֆայլի բաժնետոմսերը, խնդրում ենք օգտագործել Flexshare հավելվածը:';
-$lang['samba_initializing_core_system'] = 'Նախապատրաստվում հիմնական համակարգը, խնդրում ենք լինել համբերատար:';
-$lang['samba_initializing_warning'] = 'Կարգաբերումը կարող է տեւել մի րոպե, կամ երկու, խնդրում ենք լինել համբերատար:';
-$lang['samba_master_node_needs_initialization'] = 'Վարպետ հանգույցի պետք է initialized առաջ ընթանում:';
-$lang['samba_mode'] = 'ռեժիմ';
-$lang['samba_samba_directory_installed_warning'] = 'The Samba Ուղեցույց Ծրագիրը տեղադրված է, այնպես որ դուք այլեւս պետք է այս ծրագիրը.';
+$lang['samba_driver_has_not_been_initialized'] = 'Վարորդը չի կարգավորվել:';
+$lang['samba_file_share_tooltip'] = 'Եթե ​​ցանկանում եք ստեղծել ցանցային ֆայլերի բաժնետոմսեր, խնդրում ենք օգտագործել Flexshare ծրագիրը:';
+$lang['samba_initializing_core_system'] = 'Հիմնական համակարգի մեկնարկը, խնդրում ենք համբերատար լինել:';
+$lang['samba_initializing_warning'] = 'Մեկնարկումը կարող է տեւել մեկ րոպե կամ երկու, խնդրում ենք համբերատար լինել:';
+$lang['samba_master_node_needs_initialization'] = 'Վարիչի հանգույցը պետք է սկսվի նախքան ընթացքը:';
+$lang['samba_mode'] = 'Ռեժիմը';
+$lang['samba_samba_directory_installed_warning'] = 'Տեղադրվում է Samba Directory ծրագրային ապահովումը, այնպես որ այլեւս կարիք չկա այս հավելվածին:';
