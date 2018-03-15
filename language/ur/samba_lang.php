@@ -1,13 +1,13 @@
 <?php
 
 $lang['samba_administrator_account'] = 'ایڈمنسٹریٹر اکاؤنٹ';
-$lang['samba_app_description'] = 'ونڈوز نیٹ ورکنگ (سامبا) ونڈوز نظام کے ساتھ باہم عمل کرنے کے لئے ضروری گلو فراہم کرتا ہے. اپلی کیشن ونڈوز ڈومین کے انتظام کے ساتھ ساتھ، تصدیق خدمات، فائل اور پرنٹ فراہم کرتا ہے.';
-$lang['samba_app_name'] = 'ونڈوز نیٹ ورکنگ (سامبا)';
-$lang['samba_computers'] = 'کمپیوٹرس';
-$lang['samba_driver_has_not_been_initialized'] = 'ڈرائیور سے initialized نہیں کی گئی ہے.';
-$lang['samba_file_share_tooltip'] = 'آپ کے نیٹ ورک کی فائل حصص پیدا کرنے کے لئے چاہتے ہیں تو، Flexshare اپلی کیشن استعمال کریں، براہ مہربانی.';
-$lang['samba_initializing_core_system'] = 'بنیادی نظام شروع کیا، صبر کریں.';
-$lang['samba_initializing_warning'] = 'ابتدا ایک یا دو منٹ لگ سکتے ہیں، صبر کریں.';
-$lang['samba_master_node_needs_initialization'] = 'ماسٹر نوڈ آگے بڑھنے سے پہلے سے initialized جائے کی ضرورت ہے.';
+$lang['samba_app_description'] = 'ونڈوز نیٹ ورکنگ (سمبا) ونڈوز کے نظام کے ساتھ انٹرویو کرنے کے لئے ضروری گلو فراہم کرتا ہے. اے پی پی ونڈوز ڈومین مینجمنٹ کے ساتھ ساتھ توثیق کی خدمات، فائل اور پرنٹ فراہم کرتا ہے.';
+$lang['samba_app_name'] = 'ونڈوز نیٹ ورکنگ (سمبا)';
+$lang['samba_computers'] = 'کمپیوٹرز';
+$lang['samba_driver_has_not_been_initialized'] = 'ڈرائیور ابتدا نہیں کیا گیا ہے.';
+$lang['samba_file_share_tooltip'] = 'اگر آپ نیٹ ورک فائل حصص بنانا چاہیں تو، براہ کرم Flexshare ایپ استعمال کریں.';
+$lang['samba_initializing_core_system'] = 'بنیادی نظام کو شروع کرنا، صبر کرو.';
+$lang['samba_initializing_warning'] = 'ابتداء میں ایک یا دو منٹ لگ سکتے ہیں، براہ کرم صبر کریں.';
+$lang['samba_master_node_needs_initialization'] = 'ماسٹر نوڈ آگے بڑھنے سے پہلے ابتدائی طور پر ہونا ضروری ہے.';
 $lang['samba_mode'] = 'موڈ';
-$lang['samba_samba_directory_installed_warning'] = 'تم اب اس اپلی کیشن کی ضرورت ہے تاکہ سامبا ڈائرکٹری سافٹ ویئر، نصب کیا جاتا ہے.';
+$lang['samba_samba_directory_installed_warning'] = 'سمبا ڈائرکٹری سافٹ ویئر انسٹال کیا گیا ہے، لہذا آپ کو اب اس ایپ کی ضرورت نہیں ہے.';
